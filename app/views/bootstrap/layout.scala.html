@@ -1,0 +1,32 @@
+@*
+Base layout template for website. Most templates within the project will extend
+this.
+*@
+@import play.twirl.api.Html
+@import sso.SSOConfig
+@(title: String)(content: Html)(implicit config: SSOConfig, messages: Messages)
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>@title</title>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/png" href="@config.sponge.getString("icon").get">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/fontawesome/font-awesome.css")">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("bootstrap/css/bootstrap.min.css")" />
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/main.css")" />
+
+        <script type="text/javascript" src="@routes.Assets.at("javascripts/jquery-2.2.1.min.js")"></script>
+        <script type="text/javascript" src="@routes.Assets.at("bootstrap/js/bootstrap.min.js")"></script>
+        <script type="text/javascript" src="@routes.Assets.at("javascripts/svg.js")"></script>
+    </head>
+    <body>
+        @bootstrap.header()
+        @content
+        @bootstrap.footer()
+    </body>
+</html>

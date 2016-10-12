@@ -1,0 +1,16 @@
+@(name: String,
+  title: String,
+  optional: Boolean = false,
+  info: Boolean = true)(input: Html)(implicit messages: Messages)
+
+@optionalText = {
+    <i>(@messages("signup.optional"))</i>
+}
+
+<div>
+    <label for="@name">@messages(title) @if(optional) { @optionalText }</label>
+    @input
+    @if(info) {
+        <i>@messages(title + ".info")</i>
+    }
+</div>

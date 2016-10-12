@@ -1,0 +1,58 @@
+@*
+The main header displayed on each layout.
+*@
+@import sso.SSOConfig
+@()(implicit config: SSOConfig, messages: Messages)
+
+<nav id="top" class="navbar-main navbar navbar-fixed-top navbar-inverse">
+    <div class="container">
+        <!-- Left navbar -->
+        <ul class="nav navbar-nav navbar-left">
+            <li class="dropdown dropdown-sponge">
+                <a href="@routes.Application.showSignUp(None, None)" class="drop-down-toggle disabled"
+                   data-toggle="dropdown">
+                    <img class="logo" src="@config.sponge.getString("logo").get" />
+                    <span class="fa fa-chevron-down"></span>
+                </a>
+
+                <ul class="dropdown-menu main-dropdown" aria-label="maindropdown">
+                    <li>
+                        <a href="https://www.spongepowered.org">
+                            <i class="fa fa-fw fa-home"></i>@messages("general.home")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://forums.spongepowered.org">
+                            <i class="fa fa-fw fa-comment"></i>@messages("general.forums")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/SpongePowered" target="_blank">
+                            <i class="fa fa-fw fa-code"></i>@messages("general.code")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://docs.spongepowered.org">
+                            <i class="fa fa-fw fa-book"></i>@messages("general.docs")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://jd.spongepowered.org" target="_blank">
+                            <i class="fa fa-fw fa-graduation-cap"></i>@messages("general.javadocs")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://ore-staging.spongepowered.org">
+                            <i class="fa fa-fw fa-plug"></i>@messages("general.plugins")
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://spongepowered.org#downloads">
+                            <i class="fa fa-fw fa-download"></i>@messages("general.getsponge")
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>

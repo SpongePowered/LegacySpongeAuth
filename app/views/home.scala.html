@@ -1,0 +1,25 @@
+@import sso.SSOConfig
+@(user: User)(implicit config: SSOConfig, messages: Messages)
+
+@bootstrap.layout(messages("home.title")) {
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("home.title")</h4>
+                    </div>
+
+                    <div class="panel-body">
+                        <p>@messages("home.info", user.username)</p>
+                        <a href="@routes.Application.logOut()" class="btn btn-primary pull-right">
+                            @messages("home.logout")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

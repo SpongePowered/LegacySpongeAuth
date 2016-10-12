@@ -1,0 +1,17 @@
+@(alertType: String)(implicit flash: Flash, messages: Messages)
+
+@bootstrapNames = @{
+    Map(
+        "error" -> "alert-danger",
+        "success" -> "alert-success"
+    )
+}
+
+@flash.get(alertType).map { message =>
+    <div class="alert @bootstrapNames(alertType) alert-dismissable" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="@messages("general.close")">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        @messages(message)
+    </div>
+}

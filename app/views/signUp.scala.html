@@ -1,0 +1,55 @@
+@import sso.SSOConfig
+@import views.html.helper.form
+@(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash)
+
+@bootstrap.layout(messages("general.signUp")) {
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default panel-signup">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("signup.title")</h4>
+                    </div>
+                    <div class="panel-body">
+                        @utils.alert("error")
+
+                        @form(action = routes.Application.signUp()) {
+                            @utils.inputField("email", "signup.email") {
+                                <input type="email" name="email" class="form-control" required />
+                            }
+
+                            @utils.inputField("username", "signup.username") {
+                                <input type="text" maxlength="20" class="form-control" name="username" required />
+                            }
+
+                            @utils.inputField("password", "signup.password") {
+                                <input type="password" class="form-control" name="password" required />
+                            }
+
+                            @utils.inputField("mc-username", "signup.mcUsername", optional = true) {
+                                <input type="text" class="form-control" name="mc-username" />
+                            }
+
+                            @utils.inputField("irc-nick", "signup.ircNick", optional = true) {
+                                <input type="text" class="form-control" name="irc-nick" />
+                            }
+
+                            @utils.inputField("gh-username", "signup.ghUsername", optional = true) {
+                                <input type="text" class="form-control" name="gh-username" />
+                            }
+
+                            <div class="pull-right">
+                                <a href="@routes.Application.showLogIn(sso, sig)" class="btn btn-default">
+                                    @messages("login.title")
+                                </a>
+                                <button type="submit" class="btn btn-primary">@messages("signup.title")</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

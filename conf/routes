@@ -1,0 +1,10 @@
+GET     /login                      @controllers.Application.showLogIn(sso: Option[String], sig: Option[String])
+POST    /login                      @controllers.Application.logIn()
+GET     /logout                     @controllers.Application.logOut()
+GET     /signup                     @controllers.Application.showSignUp(sso: Option[String], sig: Option[String])
+POST    /signup                     @controllers.Application.signUp()
+
+GET     /reset                      @controllers.Application.reset()
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)

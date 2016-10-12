@@ -1,0 +1,13 @@
+.panel-signup .panel-body {
+  form {
+    margin: 0;
+  }
+
+  div:not(:last-child) {
+    margin-bottom: 10px;
+  }
+
+  i {
+    color: gray;
+  }
+}

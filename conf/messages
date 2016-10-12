@@ -1,0 +1,40 @@
+general.signUp          =   Sponge - Sign up
+general.home            =   Homepage
+general.forums          =   Forums
+general.code            =   Code
+general.docs            =   SpongeDocs
+general.javadocs        =   JavaDocs
+general.plugins         =   Plugins
+general.getsponge       =   Get Sponge
+general.organization    =   SpongePowered
+general.terms           =   Terms
+general.contact         =   Contact
+general.about           =   About
+general.sponsors        =   Sponsors
+
+error.minLength.password    =   Password too short.
+error.maxLength.password    =   Password too long.
+error.minLength.username    =   Username too short.
+error.maxLength.username    =   Username too long.
+error.verify.user           =   Invalid username or password.
+
+signup.title            =   Sign up
+signup.email            =   Email
+signup.email.info       =   Never displayed publicly
+signup.username         =   Username
+signup.username.info    =   Unique, no spaces, max 20 characters
+signup.password         =   Password
+signup.password.info    =   At least 10 characters
+signup.mcUsername       =   Minecraft Username
+signup.mcUsername.info  =   Enter the username you use for Minecraft here
+signup.ircNick          =   IRC Nick
+signup.ircNick.info     =   Join us on IRC often? Enter your IRC nick here
+signup.ghUsername       =   GitHub Username
+signup.ghUsername.info  =   Publish your software on GitHub? Enter your GitHub username here
+signup.optional         =   optional
+
+login.title = Log in
+
+home.title  =   Sponge Authentication Portal
+home.info   =   You are currently logged in as {0}.
+home.logout =   Log out
