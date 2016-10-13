@@ -1,0 +1,37 @@
+@import sso.SSOConfig
+@import views.html.helper.form
+@(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash)
+
+@bootstrap.layout(messages("verify.title")) {
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default panel-signup">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("verify.title")</h4>
+                    </div>
+
+                    <div class="panel-body">
+                        @form(action = routes.Application.verify()) {
+                            @utils.alert("error")
+
+                            @utils.inputField("username", "signup.username", info = false) {
+                                <input type="text" maxlength="20" class="form-control" name="username" required />
+                            }
+
+                            @utils.inputField("password", "signup.password", info = false) {
+                                <input type="password" class="form-control" name="password" required />
+                            }
+
+                            <div class="pull-right">
+                                <button type="submit" class="btn btn-primary">@messages("general.continue")</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

@@ -145,14 +145,61 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  def verify(sso: Option[String], sig: Option[String]) = Action { implicit request =>
-    if (sso.isEmpty || sig.isEmpty)
-      BadRequest
-    else {
-      Ok
+  /**
+    * Displays verification form for already authenticated Users.
+    *
+    * @param sso  Incoming SSO payload
+    * @param sig  Incoming SSO signature
+    * @return     BadRequest if SSO request is missing or has an invalid
+    *             signature, verification form otherwise
+    */
+  def showVerification(sso: Option[String], sig: Option[String]) = Action { implicit request =>
+    SingleSignOn.parse(this.ssoSecret, sso, sig) match {
+      case None =>
+        BadRequest
+      case Some(so) =>
+        if (!so.validateSignature())
+          BadRequest
+        else
+          Ok(views.html.verify(sso, sig)).withSession("sso" -> so.cache().id)
     }
   }
 
+  /**
+    * Attempts to verify the authenticated user with the submitted credentials.
+    *
+    * @return BadRequest if no SSO request is present, redirect to SSO origin
+    *         otherwise
+    */
+  def verify() = Action { implicit request =>
+    SingleSignOn.bindFromRequest() match {
+      case None =>
+        BadRequest
+      case Some(so) =>
+        this.forms.LogIn.bindFromRequest().fold(
+          hasErrors => {
+            val firstError = hasErrors.errors.head
+            Redirect(routes.Application.showVerification(Some(so.payload), Some(so.sig)))
+              .flashing("error" -> (firstError.message + '.' + firstError.key))
+          },
+          formData => {
+            this.users.verify(formData.username, formData.password) match {
+              case None =>
+                Redirect(routes.Application.showVerification(Some(so.payload), Some(so.sig)))
+                  .flashing("error" -> "error.verify.user")
+              case Some(user) =>
+                Redirect(so.getRedirect(user))
+            }
+          }
+        )
+    }
+  }
+
+  /**
+    * Removes all users.
+    *
+    * @return Redirect to sign up form
+    */
   def reset() = Action {
     this.config.checkDebug()
     this.users.removeAll()

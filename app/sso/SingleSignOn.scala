@@ -68,7 +68,6 @@ class SingleSignOn(secret: String,
     var returnUrl = params.find(_.startsWith("return_sso_url="))
       .getOrElse(throw new RuntimeException("sso payload missing return url"))
     returnUrl = returnUrl.substring(returnUrl.indexOf('=') + 1)
-    println(returnUrl)
 
     var nonce = params.find(_.startsWith("nonce=")).getOrElse(throw new RuntimeException("sso payload missing nonce"))
     nonce = nonce.substring(nonce.indexOf('=') + 1)

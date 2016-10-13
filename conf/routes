@@ -3,6 +3,8 @@ POST    /login                      @controllers.Application.logIn()
 GET     /logout                     @controllers.Application.logOut()
 GET     /signup                     @controllers.Application.showSignUp(sso: Option[String], sig: Option[String])
 POST    /signup                     @controllers.Application.signUp()
+GET     /verify                     @controllers.Application.showVerification(sso: Option[String], sig: Option[String])
+POST    /verify                     @controllers.Application.verify()
 
 GET     /reset                      @controllers.Application.reset()
 
