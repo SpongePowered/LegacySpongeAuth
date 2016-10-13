@@ -1,5 +1,5 @@
 @import sso.SSOConfig
-@(user: User)(implicit config: SSOConfig, messages: Messages)
+@(user: User, redirect: Option[String])(implicit config: SSOConfig, messages: Messages)
 
 @bootstrap.layout(messages("home.title")) {
 
@@ -13,6 +13,14 @@
 
                     <div class="panel-body">
                         <p>@messages("home.info", user.username)</p>
+                        @redirect.map { r =>
+                          <p>@messages("home.redirect")</p>
+                          <script>
+                              setTimeout(function() {
+                                  window.location = '@redirect';
+                              }, 5000)
+                          </script>
+                        }
                         <a href="@routes.Application.logOut()" class="btn btn-primary pull-right">
                             @messages("home.logout")
                         </a>

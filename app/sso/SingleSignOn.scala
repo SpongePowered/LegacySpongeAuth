@@ -76,6 +76,11 @@ class SingleSignOn(secret: String,
       s"&email=${user.email}" +
       s"&external_id=${user.id.get}" +
       s"&username=${user.username}"
+
+    user.mcUsername.foreach(mcUsername => newPayload += s"&custom.user_field_1=$mcUsername")
+    user.ircNick.foreach(ircNick => newPayload += s"&custom.user_field_2=$ircNick")
+    user.ghUsername.foreach(ghUsername => newPayload += s"&custom.user_field_3=$ghUsername")
+
     newPayload = new String(Base64.getEncoder.encode(newPayload.getBytes(this.CharEncoding)))
     val urlEncodedPayload = URLEncoder.encode(newPayload, this.CharEncoding)
     val newSig = hmac_sha256(newPayload.getBytes(this.CharEncoding))

@@ -1,14 +1,14 @@
 package db
 
 import java.sql.Timestamp
-import java.util.Date
+import java.util.{Date, UUID}
 import javax.inject.Inject
 
 import form.SignUpForm
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import play.api.db.slick.DatabaseConfigProvider
-import play.api.mvc.Security
+import play.api.mvc.{Cookie, Request, Security}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 import slick.driver.PostgresDriver.api._
@@ -25,13 +25,17 @@ trait UserDBO {
 
   val dbConfig: DatabaseConfig[JdbcProfile]
   val users = TableQuery[UserTable]
+  val sessions = TableQuery[SessionTable]
 
   /** The argument to be supplied to [[org.mindrot.jbcrypt.BCrypt.gensalt()]] */
   val passwordSaltLogRounds: Int
   /** The maximum wait time for database queries */
   val timeout: Long
+  val maxSessionAge: Int
 
   private def await[R](future: Future[R]): R = Await.result(future, timeout.millis)
+
+  private def theTime: Timestamp = new Timestamp(new Date().getTime)
 
   /**
     * Creates a new [[User]] using the specified [[SignUpForm]].
@@ -39,12 +43,66 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: SignUpForm): User = {
+  def createUser(formData: SignUpForm): models.Session = {
+    // Create user
     val pwdHash = BCrypt.hashpw(formData.password, BCrypt.gensalt(this.passwordSaltLogRounds))
-    val user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(new Timestamp(new Date().getTime)))
-    val query = this.users returning this.users += user
-    await(this.dbConfig.db.run(query))
+    var user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(theTime))
+    val userInsert = this.users returning this.users += user
+    user = await(this.dbConfig.db.run(userInsert))
+    createSession(user)
   }
+
+  def createSession(user: User): models.Session = {
+    val token = UUID.randomUUID().toString
+    val expiration = new Timestamp(new Date().getTime + maxSessionAge * 1000L)
+    var session = new models.Session(theTime, expiration, user.username, token)
+    val sessionInsert = this.sessions returning this.sessions += session
+    await(this.dbConfig.db.run(sessionInsert))
+  }
+
+  def createSessionCookie(session: models.Session) = Cookie("_token", session.token, Some(this.maxSessionAge))
+
+  /**
+    * Returns the currently authenticated [[User]], if any.
+    *
+    * @param request  Request of user
+    * @return         Authenticated User if found, None otherwise
+    */
+  def current(implicit request: Request[_]): Option[User] = {
+    val username = request.session.get(Security.username)
+    if (username.isDefined)
+      withName(username.get)
+    else {
+      request.cookies.get("_token").flatMap { token =>
+        getSession(token.value).flatMap(session => withName(session.username))
+      }
+    }
+  }
+
+  /**
+    * Retrieves the session for the specified token if it exists and has not
+    * expired. If expired, the session will be deleted immediately and None
+    * will be returned.
+    *
+    * @param token  Session token
+    * @return       Session if found and has not expired
+    */
+  def getSession(token: String): Option[models.Session] = {
+    await(this.dbConfig.db.run(this.sessions.filter(_.token === token).result).map(_.headOption)).flatMap { session =>
+      if (session.hasExpired) {
+        await(this.dbConfig.db.run(this.sessions.filter(_.id === session.id).delete))
+        None
+      } else
+        Some(session)
+    }
+  }
+
+  /**
+    * Deletes the session with the specified token if any.
+    *
+    * @param token Token of session
+    */
+  def deleteSession(token: String) = await(this.dbConfig.db.run(this.sessions.filter(_.token === token).delete))
 
   /**
     * Verifies the specified username's password and returns the user if
@@ -86,18 +144,11 @@ trait UserDBO {
       .map(_.headOption))
   }
 
-  /**
-    * Returns the currently authenticated [[User]], if any.
-    *
-    * @param session  Session of user
-    * @return         Authenticated User if found, None otherwise
-    */
-  def current(implicit session: play.api.mvc.Session): Option[User] = session.get(Security.username).flatMap(withName)
-
 }
 
 class UserDBOImpl @Inject()(provider: DatabaseConfigProvider, config: SSOConfig) extends UserDBO {
   override val dbConfig = this.provider.get[JdbcProfile]
   override val passwordSaltLogRounds = this.config.sso.getInt("password.saltLogRounds").get
   override val timeout = this.config.db.getLong("timeout").get
+  override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
 }

@@ -5,6 +5,7 @@ import javax.inject.Inject
 import db.UserDBO
 import form.SSOForms
 import models.User
+import play.Logger
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
@@ -12,11 +13,20 @@ import sso.{SSOConfig, SingleSignOn}
 
 class Application @Inject()(override val messagesApi: MessagesApi,
                             val forms: SSOForms,
-                            val users: UserDBO,
+                            implicit val users: UserDBO,
                             implicit val cache: CacheApi,
                             implicit val config: SSOConfig) extends Controller with I18nSupport {
 
   val ssoSecret = this.config.sso.getString("secret").get
+
+  def showHome(redirect: Option[String]) = Action { implicit request =>
+    this.users.current match {
+      case None =>
+        Redirect(routes.Application.showLogIn(None, None))
+      case Some(user) =>
+        Ok(views.html.home(user, redirect))
+    }
+  }
 
   /**
     * Displays the log in page.
@@ -33,8 +43,12 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     this.users.current match {
       case None =>
         // User not logged in, cache SSO request
-        signOn.foreach { so => if (so.validateSignature())
-          result = result.withSession("sso" -> so.cache().id)
+        signOn.foreach { so =>
+          if (so.validateSignature()) {
+            Logger.info("Validated incoming SSO signature.")
+            result = result.withSession("sso" -> so.cache().id)
+          } else
+            Logger.warn("Could not validate incoming SSO signature.")
         }
       case Some(user) =>
         result = onSessionFound(user, signOn)
@@ -58,21 +72,18 @@ class Application @Inject()(override val messagesApi: MessagesApi,
       this.forms.LogIn.bindFromRequest().fold(
         hasErrors => {
           val firstError = hasErrors.errors.head
-          Redirect(routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig)))
-            .flashing("error" -> (firstError.message + '.' + firstError.key))
+          val call = routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig))
+          Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
           this.users.verify(formData.username, formData.password) match {
             case None =>
-              Redirect(routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig)))
-                .flashing("error" -> "error.verify.user")
+              val call = routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig))
+              Redirect(call).flashing("error" -> "error.verify.user")
             case Some(user) =>
-              signOn match {
-                case None =>
-                  Ok(views.html.home(user)).withSession(Security.username -> user.username)
-                case Some(so) =>
-                  Redirect(so.getRedirect(user))
-              }
+              val cookie = this.users.createSessionCookie(this.users.createSession(user))
+              val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
+              Redirect(call).withSession(Security.username -> user.username).withCookies(cookie)
           }
         }
       )
@@ -85,7 +96,8 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     * @return Redirection to login form
     */
   def logOut() = Action { implicit request =>
-    Redirect(routes.Application.showLogIn(None, None)).withNewSession
+    request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
+    Redirect(routes.Application.showLogIn(None, None)).withNewSession.discardingCookies(DiscardingCookie("_token"))
   }
 
   /**
@@ -132,14 +144,12 @@ class Application @Inject()(override val messagesApi: MessagesApi,
             .flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
-          val user = this.users.createUser(formData)
-          signOn match {
-            case None =>
-              Ok(views.html.home(user))
-            case Some(so) =>
-              // Return to original origin
-              Redirect(so.getRedirect(user))
-          }
+          // Create the user
+          val session = this.users.createUser(formData)
+          val user = session.user
+          val cookie = this.users.createSessionCookie(session)
+          val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
+          Redirect(call).withCookies(cookie)
         }
       )
     }
@@ -206,13 +216,7 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     Redirect(routes.Application.showSignUp(None, None))
   }
 
-  private def onSessionFound(user: User, sso: Option[SingleSignOn]) = {
-    sso match {
-      case None =>
-        Ok(views.html.home(user))
-      case Some(so) =>
-        Redirect(so.getRedirect(user))
-    }
-  }
+  private def onSessionFound(user: User, sso: Option[SingleSignOn])
+  = Redirect(routes.Application.showHome(sso.map(_.getRedirect(user))))
 
 }
