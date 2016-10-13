@@ -124,8 +124,15 @@ object SingleSignOn {
   def parse(secret: String,
             sso: Option[String],
             sig: Option[String])
-           (implicit session: Session, cache: CacheApi): Option[SingleSignOn]
-  = sso.flatMap(payload => sig.map(new SingleSignOn(secret, payload, _)))
+           (implicit session: Session, cache: CacheApi): Option[SingleSignOn] = {
+    sso.flatMap(payload => sig.flatMap(sig => {
+      val signOn = new SingleSignOn(secret, payload, sig)
+      if (signOn.validateSignature())
+        Some(signOn)
+      else
+        None
+    }))
+  }
 
   /**
     * Retrieves a cached [[SingleSignOn]] for the Session of the request, if

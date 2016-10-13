@@ -5,7 +5,6 @@ import javax.inject.Inject
 import db.UserDBO
 import form.SSOForms
 import models.User
-import play.Logger
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
@@ -43,13 +42,7 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     this.users.current match {
       case None =>
         // User not logged in, cache SSO request
-        signOn.foreach { so =>
-          if (so.validateSignature()) {
-            Logger.info("Validated incoming SSO signature.")
-            result = result.withSession("sso" -> so.cache().id)
-          } else
-            Logger.warn("Could not validate incoming SSO signature.")
-        }
+        signOn.foreach(so => result = result.withSession("sso" -> so.cache().id))
       case Some(user) =>
         result = onSessionFound(user, signOn)
     }
@@ -114,9 +107,7 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     val signOn = SingleSignOn.parse(this.ssoSecret, sso, sig) // Parse the SSO request if any
     this.users.current match {
       case None =>
-        signOn.foreach { so => if (so.validateSignature()) // Validate the SSO payload and cache it
-          result = result.withSession("sso" -> so.cache().id)
-        }
+        signOn.foreach(so => result = result.withSession("sso" -> so.cache().id))
       case Some(user) =>
         result = onSessionFound(user, signOn)
     }
@@ -168,10 +159,7 @@ class Application @Inject()(override val messagesApi: MessagesApi,
       case None =>
         BadRequest
       case Some(so) =>
-        if (!so.validateSignature())
-          BadRequest
-        else
-          Ok(views.html.verify(sso, sig)).withSession("sso" -> so.cache().id)
+        Ok(views.html.verify(sso, sig)).withSession("sso" -> so.cache().id)
     }
   }
 
