@@ -145,8 +145,12 @@ class Application @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  def verify() = Action { implicit request =>
-    Ok
+  def verify(sso: Option[String], sig: Option[String]) = Action { implicit request =>
+    if (sso.isEmpty || sig.isEmpty)
+      BadRequest
+    else {
+      Ok
+    }
   }
 
   def reset() = Action {

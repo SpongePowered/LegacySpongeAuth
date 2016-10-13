@@ -1,6 +1,7 @@
 package sso
 
-import java.util.UUID
+import java.net.{URLDecoder, URLEncoder}
+import java.util.{Base64, UUID}
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -51,9 +52,7 @@ class SingleSignOn(secret: String,
     *
     * @return True if validated
     */
-  def validateSignature(): Boolean = {
-    false
-  }
+  def validateSignature(): Boolean = hmac_sha256(payload.getBytes(CharEncoding)).equals(sig)
 
   /**
     * Generates a new payload and builds a URL to return to the original
@@ -63,7 +62,26 @@ class SingleSignOn(secret: String,
     * @return     URL String
     */
   def getRedirect(user: User): String = {
-    null
+    val decodedPayload = URLDecoder.decode(new String(Base64.getMimeDecoder.decode(this.payload)), this.CharEncoding)
+    val params = decodedPayload.split('&')
+
+    var returnUrl = params.find(_.startsWith("return_sso_url="))
+      .getOrElse(throw new RuntimeException("sso payload missing return url"))
+    returnUrl = returnUrl.substring(returnUrl.indexOf('=') + 1)
+    println(returnUrl)
+
+    var nonce = params.find(_.startsWith("nonce=")).getOrElse(throw new RuntimeException("sso payload missing nonce"))
+    nonce = nonce.substring(nonce.indexOf('=') + 1)
+
+    var newPayload = s"nonce=$nonce" +
+      s"&email=${user.email}" +
+      s"&external_id=${user.id.get}" +
+      s"&username=${user.username}"
+    newPayload = new String(Base64.getEncoder.encode(newPayload.getBytes(this.CharEncoding)))
+    val urlEncodedPayload = URLEncoder.encode(newPayload, this.CharEncoding)
+    val newSig = hmac_sha256(newPayload.getBytes(this.CharEncoding))
+
+    s"$returnUrl?sso=$urlEncodedPayload&sig=$newSig"
   }
 
   /**
