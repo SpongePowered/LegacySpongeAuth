@@ -17,6 +17,12 @@ error.maxLength.password    =   Password too long.
 error.minLength.username    =   Username too short.
 error.maxLength.username    =   Username too long.
 error.verify.user           =   Invalid username or password.
+error.unique.email          =   An account with that email already exists.
+error.unique.username       =   An account with that username already exists.
+error.unique.mcUsername     =   An account with that Minecraft username already exists.
+error.unique.ircNick        =   An account with that IRC nick already exists.
+error.unique.ghUsername     =   An account with that GitHub username already exists.
+
 
 signup.title            =   Sign up
 signup.email            =   Email
@@ -35,6 +41,7 @@ signup.optional         =   optional
 
 login.title = Log in
 
-home.title  =   Sponge Authentication Portal
-home.info   =   You are currently logged in as {0}.
-home.logout =   Log out
+home.title      =   Sponge Authentication Portal
+home.info       =   You are currently logged in as {0}.
+home.logout     =   Log out
+home.redirect   =   Returning to original site...

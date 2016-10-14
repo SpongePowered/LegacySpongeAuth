@@ -17,6 +17,7 @@ import sso.SSOConfig
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.languageFeature.implicitConversions
 
 /**
   * Contains all [[User]] information.
@@ -144,9 +145,19 @@ trait UserDBO {
       .map(_.headOption))
   }
 
+  /**
+    * Checks if the specified user field is unique for the specified value.
+    *
+    * @param rep    User field
+    * @param value  Value to check
+    * @return       True if unique
+    */
+  def isFieldUnique(rep: UserTable => Rep[String], value: String): Boolean
+  = await(this.dbConfig.db.run((!this.users.filter(rep(_) === value).exists).result))
+
 }
 
-class UserDBOImpl @Inject()(provider: DatabaseConfigProvider, config: SSOConfig) extends UserDBO {
+final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider, config: SSOConfig) extends UserDBO {
   override val dbConfig = this.provider.get[JdbcProfile]
   override val passwordSaltLogRounds = this.config.sso.getInt("password.saltLogRounds").get
   override val timeout = this.config.db.getLong("timeout").get

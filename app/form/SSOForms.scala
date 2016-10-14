@@ -2,21 +2,12 @@ package form
 
 import javax.inject.Inject
 
+import db.UserDBO
 import play.api.data.Form
 import play.api.data.Forms._
 import sso.SSOConfig
 
-class SSOForms @Inject()(config: SSOConfig) {
-
-  private val username = nonEmptyText(
-    minLength = this.config.sso.getInt("username.minLen").get,
-    maxLength = this.config.sso.getInt("username.maxLen").get
-  )
-
-  private val password = nonEmptyText(
-    minLength = this.config.sso.getInt("password.minLen").get,
-    maxLength = this.config.sso.getInt("password.maxLen").get
-  )
+final class SSOForms @Inject()(override val config: SSOConfig, override val users: UserDBO) extends Constraints {
 
   lazy val LogIn = Form(mapping(
     "username" -> username,
@@ -24,12 +15,12 @@ class SSOForms @Inject()(config: SSOConfig) {
   )(LogInForm.apply)(LogInForm.unapply))
 
   lazy val SignUp = Form(mapping(
-    "email" -> email,
-    "username" -> username,
+    "email" -> email.unique(_.email),
+    "username" -> username.unique(_.username),
     "password" -> password,
-    "mc-username" -> optional(nonEmptyText),
-    "irc-nick" -> optional(nonEmptyText),
-    "gh-username" -> optional(nonEmptyText)
+    "mc-username" -> optional(nonEmptyText).unique(_.mcUsername),
+    "irc-nick" -> optional(nonEmptyText).unique(_.ircNick),
+    "gh-username" -> optional(nonEmptyText).unique(_.ghUsername)
   )(SignUpForm.apply)(SignUpForm.unapply))
 
 }

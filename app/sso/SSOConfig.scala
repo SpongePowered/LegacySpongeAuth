@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import play.api.Configuration
 
-class SSOConfig @Inject()(config: Configuration) {
+final class SSOConfig @Inject()(config: Configuration) {
 
   lazy val play = this.config.getConfig("play").get
   lazy val sponge = this.config.getConfig("sponge").get

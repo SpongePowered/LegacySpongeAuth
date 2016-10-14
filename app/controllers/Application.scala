@@ -10,13 +10,13 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import sso.{SSOConfig, SingleSignOn}
 
-class Application @Inject()(override val messagesApi: MessagesApi,
-                            val forms: SSOForms,
-                            implicit val users: UserDBO,
-                            implicit val cache: CacheApi,
-                            implicit val config: SSOConfig) extends Controller with I18nSupport {
+final class Application @Inject()(override val messagesApi: MessagesApi,
+                                  val forms: SSOForms,
+                                  implicit val users: UserDBO,
+                                  implicit val cache: CacheApi,
+                                  implicit val config: SSOConfig) extends Controller with I18nSupport {
 
-  val ssoSecret = this.config.sso.getString("secret").get
+  private val ssoSecret = this.config.sso.getString("secret").get
 
   def showHome(redirect: Option[String]) = Action { implicit request =>
     this.users.current match {

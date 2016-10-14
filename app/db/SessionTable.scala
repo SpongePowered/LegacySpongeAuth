@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import slick.driver.PostgresDriver.api._
 
-class SessionTable(tag: Tag) extends Table[models.Session](tag, "sessions") {
+final class SessionTable(tag: Tag) extends Table[models.Session](tag, "sessions") {
 
   def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
   def createdAt = column[Timestamp]("created_at")
