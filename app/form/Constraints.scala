@@ -17,10 +17,12 @@ trait Constraints {
   import this.users.isFieldUnique
   import this.config.sso.getInt
 
+  val usernameRegex = "^\\S*$"
+
   val username = nonEmptyText(
     minLength = getInt("username.minLen").get,
     maxLength = getInt("username.maxLen").get
-  )
+  ) verifying("error.malformed", _.matches(this.usernameRegex))
 
   val password = nonEmptyText(
     minLength = getInt("password.minLen").get,
