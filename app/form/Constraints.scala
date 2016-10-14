@@ -14,26 +14,53 @@ trait Constraints {
   val config: SSOConfig
   val users: UserDBO
 
-  import users.isFieldUnique
+  import this.users.isFieldUnique
+  import this.config.sso.getInt
 
   val username = nonEmptyText(
-    minLength = this.config.sso.getInt("username.minLen").get,
-    maxLength = this.config.sso.getInt("username.maxLen").get
+    minLength = getInt("username.minLen").get,
+    maxLength = getInt("username.maxLen").get
   )
 
   val password = nonEmptyText(
-    minLength = this.config.sso.getInt("password.minLen").get,
-    maxLength = this.config.sso.getInt("password.maxLen").get
+    minLength = getInt("password.minLen").get,
+    maxLength = getInt("password.maxLen").get
   )
 
+  /**
+    * A wrapper for a String [[Mapping]].
+    *
+    * @param mapping Mapping to wrap
+    */
   implicit final class UniqueStringMapping(mapping: Mapping[String]) {
+
+    /**
+      * Verifies that this mapping's value is unique in the [[UserTable]].
+      *
+      * @param rep  UserTable [[Rep]]
+      * @return     Modified mapping
+      */
     def unique(rep: UserTable => Rep[String])
     = mapping.verifying("error.unique", str => isFieldUnique(rep(_).toLowerCase, str.toLowerCase))
+
   }
 
+  /**
+    * A wrapper for an String Option [[Mapping]].
+    *
+    * @param mapping Mapping to wrap
+    */
   implicit final class UniqueStringOptionMapping(mapping: Mapping[Option[String]]) {
+
+    /**
+      * Verifies that this mapping's value is unique in the [[UserTable]].
+      *
+      * @param rep  UserTable [[Rep]]
+      * @return     Modified mapping
+      */
     def unique(rep: UserTable => Rep[String])
     = mapping.verifying("error.unique", _.forall(str => isFieldUnique(rep(_).toLowerCase, str.toLowerCase)))
+
   }
 
 }

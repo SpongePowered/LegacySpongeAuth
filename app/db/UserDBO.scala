@@ -6,7 +6,7 @@ import javax.inject.Inject
 
 import form.SignUpForm
 import models.User
-import org.mindrot.jbcrypt.BCrypt
+import org.mindrot.jbcrypt.BCrypt._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request, Security}
 import slick.backend.DatabaseConfig
@@ -14,9 +14,9 @@ import slick.driver.JdbcProfile
 import slick.driver.PostgresDriver.api._
 import sso.SSOConfig
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.languageFeature.implicitConversions
 
 /**
@@ -34,9 +34,12 @@ trait UserDBO {
   val timeout: Long
   val maxSessionAge: Int
 
+  import dbConfig.db
+  import models.{Session => DbSession}
+
   private def await[R](future: Future[R]): R = Await.result(future, timeout.millis)
 
-  private def theTime: Timestamp = new Timestamp(new Date().getTime)
+  protected def theTime: Timestamp = new Timestamp(new Date().getTime)
 
   /**
     * Creates a new [[User]] using the specified [[SignUpForm]].
@@ -44,24 +47,36 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: SignUpForm): models.Session = {
+  def createUser(formData: SignUpForm): DbSession = {
     // Create user
-    val pwdHash = BCrypt.hashpw(formData.password, BCrypt.gensalt(this.passwordSaltLogRounds))
+    val pwdHash = hashpw(formData.password, gensalt(this.passwordSaltLogRounds))
     var user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(theTime))
     val userInsert = this.users returning this.users += user
-    user = await(this.dbConfig.db.run(userInsert))
+    user = await(db.run(userInsert))
     createSession(user)
   }
 
-  def createSession(user: User): models.Session = {
+  /**
+    * Creates a new [[models.Session]] for the specified [[User]].
+    *
+    * @param user User to create session for
+    * @return     New session
+    */
+  def createSession(user: User): DbSession = {
     val token = UUID.randomUUID().toString
     val expiration = new Timestamp(new Date().getTime + maxSessionAge * 1000L)
-    var session = new models.Session(theTime, expiration, user.username, token)
+    var session = new DbSession(theTime, expiration, user.username, token)
     val sessionInsert = this.sessions returning this.sessions += session
-    await(this.dbConfig.db.run(sessionInsert))
+    await(db.run(sessionInsert))
   }
 
-  def createSessionCookie(session: models.Session) = Cookie("_token", session.token, Some(this.maxSessionAge))
+  /**
+    * Creates a new Cookie to be given to the client to identify their session.
+    *
+    * @param session  Session to create cookie for
+    * @return         Session cookie
+    */
+  def createSessionCookie(session: DbSession) = Cookie("_token", session.token, Some(this.maxSessionAge))
 
   /**
     * Returns the currently authenticated [[User]], if any.
@@ -88,10 +103,10 @@ trait UserDBO {
     * @param token  Session token
     * @return       Session if found and has not expired
     */
-  def getSession(token: String): Option[models.Session] = {
-    await(this.dbConfig.db.run(this.sessions.filter(_.token === token).result).map(_.headOption)).flatMap { session =>
+  def getSession(token: String): Option[DbSession] = {
+    await(db.run(this.sessions.filter(_.token === token).result).map(_.headOption)).flatMap { session =>
       if (session.hasExpired) {
-        await(this.dbConfig.db.run(this.sessions.filter(_.id === session.id).delete))
+        await(db.run(this.sessions.filter(_.id === session.id).delete))
         None
       } else
         Some(session)
@@ -103,7 +118,7 @@ trait UserDBO {
     *
     * @param token Token of session
     */
-  def deleteSession(token: String) = await(this.dbConfig.db.run(this.sessions.filter(_.token === token).delete))
+  def deleteSession(token: String) = await(db.run(this.sessions.filter(_.token === token).delete))
 
   /**
     * Verifies the specified username's password and returns the user if
@@ -114,7 +129,7 @@ trait UserDBO {
     * @return         User if successful, None otherwise
     */
   def verify(username: String, password: String): Option[User] = withName(username).flatMap { user =>
-    if (BCrypt.checkpw(password, user.password))
+    if (checkpw(password, user.password))
       Some(user)
     else
       None
@@ -123,7 +138,7 @@ trait UserDBO {
   /**
     * Removes all [[User]]s from the database.
     */
-  def removeAll() = await(this.dbConfig.db.run(this.users.delete))
+  def removeAll() = await(db.run(this.users.delete))
 
   /**
     * Returns the [[User]] with the specified ID, if any.
@@ -131,7 +146,7 @@ trait UserDBO {
     * @param id ID to get
     * @return   User if found, None otherwise
     */
-  def get(id: Int): Option[User] = await(this.dbConfig.db.run(this.users.filter(_.id === id).result).map(_.headOption))
+  def get(id: Int): Option[User] = await(db.run(this.users.filter(_.id === id).result).map(_.headOption))
 
   /**
     * Returns the [[User]] with the specified username if any.
@@ -140,7 +155,7 @@ trait UserDBO {
     * @return         User if found, None otherwise
     */
   def withName(username: String): Option[User] = {
-    await(this.dbConfig.db.run(this.users
+    await(db.run(this.users
       .filter(_.username.toLowerCase === username.toLowerCase).result)
       .map(_.headOption))
   }
@@ -153,7 +168,7 @@ trait UserDBO {
     * @return       True if unique
     */
   def isFieldUnique(rep: UserTable => Rep[String], value: String): Boolean
-  = await(this.dbConfig.db.run((!this.users.filter(rep(_) === value).exists).result))
+  = await(db.run((!this.users.filter(rep(_) === value).exists).result))
 
 }
 

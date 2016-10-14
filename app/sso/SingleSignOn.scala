@@ -44,8 +44,8 @@ class SingleSignOn(secret: String,
                   (implicit session: Session,
                    cacheApi: CacheApi) {
 
-  val CharEncoding = "UTF-8"
-  val Algo = "HmacSHA256"
+  private val CharEncoding = "UTF-8"
+  private val Algo = "HmacSHA256"
 
   /**
     * Validates the incoming signature.

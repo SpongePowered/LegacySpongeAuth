@@ -10,6 +10,9 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import sso.{SSOConfig, SingleSignOn}
 
+/**
+  * Main entry point for Sponge SSO.
+  */
 final class Application @Inject()(override val messagesApi: MessagesApi,
                                   val forms: SSOForms,
                                   implicit val users: UserDBO,
@@ -18,6 +21,12 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
 
   private val ssoSecret = this.config.sso.getString("secret").get
 
+  /**
+    * Displays the "home" page. A user must be authenticated to view the home page.
+    *
+    * @param redirect Final destination
+    * @return         Redirect to log in if not authenticated, home page otherwise
+    */
   def showHome(redirect: Option[String]) = Action { implicit request =>
     this.users.current match {
       case None =>
@@ -131,8 +140,8 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         hasErrors => {
           // User error
           val firstError = hasErrors.errors.head
-          Redirect(routes.Application.showSignUp(signOn.map(_.payload), signOn.map(_.sig)))
-            .flashing("error" -> (firstError.message + '.' + firstError.key))
+          val call = routes.Application.showSignUp(signOn.map(_.payload), signOn.map(_.sig))
+          Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
           // Create the user
@@ -140,7 +149,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           val user = session.user
           val cookie = this.users.createSessionCookie(session)
           val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
-          Redirect(call).withCookies(cookie)
+          Redirect(call).withSession(Security.username -> user.username).withCookies(cookie)
         }
       )
     }
@@ -177,14 +186,14 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         this.forms.LogIn.bindFromRequest().fold(
           hasErrors => {
             val firstError = hasErrors.errors.head
-            Redirect(routes.Application.showVerification(Some(so.payload), Some(so.sig)))
-              .flashing("error" -> (firstError.message + '.' + firstError.key))
+            val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
+            Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
           },
           formData => {
             this.users.verify(formData.username, formData.password) match {
               case None =>
-                Redirect(routes.Application.showVerification(Some(so.payload), Some(so.sig)))
-                  .flashing("error" -> "error.verify.user")
+                val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
+                Redirect(call).flashing("error" -> "error.verify.user")
               case Some(user) =>
                 Redirect(so.getRedirect(user))
             }

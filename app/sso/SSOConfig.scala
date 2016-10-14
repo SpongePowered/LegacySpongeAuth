@@ -4,6 +4,9 @@ import javax.inject.Inject
 
 import play.api.Configuration
 
+/**
+  * A convenience class for managing Sponge SSO's configuration.
+  */
 final class SSOConfig @Inject()(config: Configuration) {
 
   lazy val play = this.config.getConfig("play").get
@@ -11,6 +14,7 @@ final class SSOConfig @Inject()(config: Configuration) {
   lazy val sso = this.config.getConfig("sso").get
   lazy val db = this.config.getConfig("db").get
 
+  /** Ensures that debug mode is enabled. */
   def checkDebug() = if (!this.sso.getBoolean("debug").get) throw new IllegalStateException("must be in debug mode")
 
 }
