@@ -35,7 +35,10 @@ class ApplicationSpec extends Specification {
   this.sso.secret = this.config.sso.getString("secret").get
 
   val users = this.injector.instanceOf[UserDBO]
-  val ssoQuery = this.sso.getQuery("/test/sso_consume")
+
+  val ssoRoute = "/test/sso_consume"
+  val ssoQuery = this.sso.getQuery()
+  val badSSOQuery = this.sso.getQuery(badSig = true)
 
   this.users.removeAll()
 
@@ -140,6 +143,12 @@ class ApplicationSpec extends Specification {
     }
 
     "signUp" should {
+      "reject invalid sso signatures" in {
+        val request = FakeRequest(GET, "/signup" + ApplicationSpec.this.badSSOQuery)
+        val showSignUp = route(ApplicationSpec.this.app, request).get
+        status(showSignUp) must equalTo(OK)
+        getSSOToken(showSignUp).isEmpty must equalTo(true)
+      }
 
       "complete sso" in new WithServer {
         // Get the sign up form to cache the SSO request
@@ -156,7 +165,6 @@ class ApplicationSpec extends Specification {
 
         ApplicationSpec.this.users.removeAll()
       }
-
 
       "create user" in new WithServer {
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
@@ -227,6 +235,13 @@ class ApplicationSpec extends Specification {
         assertHasError(logIn, "error.verify.user")
       }
 
+      "reject invalid sso signatures" in {
+        val request = FakeRequest(GET, "/login" + ApplicationSpec.this.badSSOQuery)
+        val showSignUp = route(ApplicationSpec.this.app, request).get
+        status(showSignUp) must equalTo(OK)
+        getSSOToken(showSignUp).isEmpty must equalTo(true)
+      }
+
       "complete sso" in new WithServer {
         val showLogIn = route(ApplicationSpec.this.app, FakeRequest(GET, "/login" + ApplicationSpec.this.ssoQuery)).get
         status(showLogIn) must equalTo(OK)
@@ -241,6 +256,45 @@ class ApplicationSpec extends Specification {
 
       "success" in new WithServer {
         assertAuthenticated(doLogIn(FakeRequest(POST, "/login"), FakeUser.username, FakeUser.password))
+      }
+    }
+
+    "showVerification" should {
+      "fail without sso" in {
+        val verify = route(this.app, FakeRequest(GET, "/verify")).get
+        status(verify) must equalTo(BAD_REQUEST)
+      }
+    }
+
+    "verify" should {
+      "fail with invalid username" in {
+        val verify = doLogIn(FakeRequest(POST, "/verify"), "urmom", FakeUser.password)
+        status(verify) must equalTo(BAD_REQUEST)
+      }
+
+      "fail with invalid password" in {
+        val verify = doLogIn(FakeRequest(POST, "/verify"), FakeUser.username, "franksandbeans")
+        status(verify) must equalTo(BAD_REQUEST)
+      }
+
+      "reject invalid sso signatures" in {
+        val request = FakeRequest(GET, "/verify" + ApplicationSpec.this.badSSOQuery)
+        val showSignUp = route(ApplicationSpec.this.app, request).get
+        status(showSignUp) must equalTo(BAD_REQUEST)
+        getSSOToken(showSignUp).isEmpty must equalTo(true)
+      }
+
+      "complete sso" in new WithServer {
+        val verifyRequest = FakeRequest(GET, "/verify" + ApplicationSpec.this.ssoQuery)
+        val showVerify = route(ApplicationSpec.this.app, verifyRequest).get
+        status(showVerify) must equalTo(OK)
+        val ssoToken = getSSOToken(showVerify)
+        ssoToken.isDefined must equalTo(true)
+
+        val request = FakeRequest(POST, "/verify").withSession("sso" -> ssoToken.get)
+        val verify = doLogIn(request, FakeUser.username, FakeUser.password)
+        status(verify) must equalTo(SEE_OTHER)
+        assertSSOSuccess(verify)
       }
     }
 

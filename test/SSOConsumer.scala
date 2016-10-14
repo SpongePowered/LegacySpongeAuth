@@ -27,19 +27,19 @@ class SSOConsumer {
   val Algo = "HmacSHA256"
   val Random = new SecureRandom
 
+  val ConsumeSSO = "/test/sso_consume"
   val Router = new Router
 
   /**
     * Returns the URL with a generated SSO payload to the SSO instance.
     *
-    * @param returnUrl  URL to return to after authentication
-    * @return           URL to SSO
+    * @return URL to SSO
     */
-  def getQuery(returnUrl: String): String = {
-    val payload = "return_sso_url=" + returnUrl + "&nonce=" + nonce
+  def getQuery(badSig: Boolean = false): String = {
+    val payload = "return_sso_url=" + ConsumeSSO + "&nonce=" + nonce
     val encoded = new String(Base64.getEncoder.encode(payload.getBytes(this.CharEncoding)))
     val urlEncoded = URLEncoder.encode(encoded, this.CharEncoding)
-    val hmac = hmac_sha256(encoded.getBytes(this.CharEncoding))
+    val hmac = if (!badSig) hmac_sha256(encoded.getBytes(this.CharEncoding)) else "invalid_signature"
     "?sso=" + urlEncoded + "&sig=" + hmac
   }
 
@@ -91,8 +91,6 @@ class SSOConsumer {
   }
 
   class Router extends SimpleRouter {
-
-    val ConsumeSSO = "/test/sso_consume"
 
     def routes: Routes = new AbstractPartialFunction[RequestHeader, Handler] {
       def isDefinedAt(x: RequestHeader): Boolean = x.path.equals(ConsumeSSO)

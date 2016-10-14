@@ -109,12 +109,12 @@ class SingleSignOn(secret: String,
     Hex.encodeHexString(hmac.doFinal(data))
   }
 
-  override def toString = {
+  override def toString() = {
     "SingleSignOn {\n" +
       s"\tID: $id\n" +
       s"\tPayload: $payload\n" +
       s"\tSignature: $sig\n" +
-    "}"
+      "}"
   }
 
 }

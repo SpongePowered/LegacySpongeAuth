@@ -195,7 +195,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                 val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
                 Redirect(call).flashing("error" -> "error.verify.user")
               case Some(user) =>
-                Redirect(so.getRedirect(user))
+                Redirect(routes.Application.showHome(Some(so.getRedirect(user))))
             }
           }
         )
