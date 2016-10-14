@@ -7,6 +7,7 @@ import javax.crypto.spec.SecretKeySpec
 
 import models.User
 import org.apache.commons.codec.binary.Hex
+import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.mvc.Session
 
@@ -97,6 +98,7 @@ class SingleSignOn(secret: String,
   def cache(): SingleSignOn = {
     this.id = UUID.randomUUID().toString
     this.cacheApi.set(id, this)
+    Logger.info("Cached SSO request with value: " + this)
     this
   }
 
@@ -105,6 +107,14 @@ class SingleSignOn(secret: String,
     val keySpec = new SecretKeySpec(this.secret.getBytes(this.CharEncoding), this.Algo)
     hmac.init(keySpec)
     Hex.encodeHexString(hmac.doFinal(data))
+  }
+
+  override def toString = {
+    "SingleSignOn {\n" +
+      s"\tID: $id\n" +
+      s"\tPayload: $payload\n" +
+      s"\tSignature: $sig\n" +
+    "}"
   }
 
 }
@@ -127,9 +137,10 @@ object SingleSignOn {
            (implicit session: Session, cache: CacheApi): Option[SingleSignOn] = {
     sso.flatMap(payload => sig.flatMap(sig => {
       val signOn = new SingleSignOn(secret, payload, sig)
-      if (signOn.validateSignature())
+      if (signOn.validateSignature()) {
+        Logger.info("Parsed SSO request of value: " + signOn)
         Some(signOn)
-      else
+      } else
         None
     }))
   }
@@ -145,6 +156,8 @@ object SingleSignOn {
   def bindFromRequest()(implicit session: Session, cache: CacheApi): Option[SingleSignOn] = {
     session.get("sso").flatMap { id =>
       val so = cache.get[SingleSignOn](id)
+      if (so.isDefined)
+        Logger.info("Retrieved SSO request from cache of value: " + so.get)
       cache.remove(id)
       so
     }

@@ -1,9 +1,13 @@
+import java.net.URLDecoder
+
 import db.UserDBO
 import org.apache.commons.lang3.RandomStringUtils.{randomAlphanumeric => randomString}
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.inject.bind
+import play.api.Mode
+import play.api.cache.CacheApi
+import play.api.inject._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Cookie, Security}
 import play.api.test.Helpers._
@@ -15,13 +19,27 @@ import scala.concurrent.Future
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
 
-  val app = GuiceApplicationBuilder().overrides(bind[UserDBO].to[MockUserDBO]).build
+  val sso = new SSOConsumer
+
+  val app = GuiceApplicationBuilder()
+    .overrides(bind[CacheApi].to[MockCacheApi])
+    .overrides(bind[UserDBO].to[MockUserDBO])
+    .eagerlyLoaded()
+    .additionalRouter(this.sso.Router)
+    .in(Mode.Test)
+    .build()
+
   val injector = this.app.injector
-  val users = this.injector.instanceOf[UserDBO]
   val config = this.injector.instanceOf[SSOConfig]
-  val sso = new SSOConsumer(this.config.sso.getString("secret").get)
+
+  this.sso.secret = this.config.sso.getString("secret").get
+
+  val users = this.injector.instanceOf[UserDBO]
+  val ssoQuery = this.sso.getQuery("/test/sso_consume")
 
   this.users.removeAll()
+
+  import users.getSession
 
   def doSignUp(request: FakeRequest[_],
                email: String = FakeUser.email,
@@ -42,13 +60,13 @@ class ApplicationSpec extends Specification {
   }
 
   def doLogOut(authToken: Cookie) = {
-    var serverSession = ApplicationSpec.this.users.getSession(authToken.value)
+    var serverSession = getSession(authToken.value)
     serverSession.isDefined must equalTo(true)
     serverSession.get.username must equalTo(FakeUser.username)
 
     val logOut = route(this.app, FakeRequest(GET, "/logout").withCookies(authToken)).get
     status(logOut) must equalTo(SEE_OTHER)
-    serverSession = ApplicationSpec.this.users.getSession(authToken.value)
+    serverSession = getSession(authToken.value)
     serverSession.isEmpty must equalTo(true)
     session(logOut).get(Security.username).isEmpty must equalTo(true)
   }
@@ -63,7 +81,7 @@ class ApplicationSpec extends Specification {
     val token = getAuthToken(result)
     token.isDefined must equalTo(true)
 
-    val serverSession = this.users.getSession(token.get.value)
+    val serverSession = getSession(token.get.value)
     serverSession.isDefined must equalTo(true)
     serverSession.get.username must equalTo(FakeUser.username)
 
@@ -77,6 +95,22 @@ class ApplicationSpec extends Specification {
     val user = ApplicationSpec.this.users.withName(FakeUser.username)
     user.isDefined must equalTo(true)
     assertAuthenticated(result)
+  }
+
+  def assertSSOSuccess(result: Future[play.api.mvc.Result]) = {
+    val homeRedirect = redirectLocation(result).get
+    val queryIndex = homeRedirect.indexOf('?')
+    queryIndex must not equalTo(-1)
+    val queryParams = homeRedirect.substring(queryIndex + 1).split('&')
+    queryParams.length must beGreaterThanOrEqualTo(1)
+
+    val finalRedirect = queryParams.find(_.startsWith("redirect=")).map(r => r.substring(r.indexOf('=') + 1))
+    finalRedirect.isDefined must equalTo(true)
+
+    // Follow the redirect
+    val redirectUrl = URLDecoder.decode(finalRedirect.get, "UTF-8")
+    val consumeSSO = route(ApplicationSpec.this.app, FakeRequest(GET, redirectUrl)).get
+    status(consumeSSO) must equalTo(OK)
   }
 
   def getAuthToken(result: Future[play.api.mvc.Result]): Option[Cookie] = cookies(result).get("_token")
@@ -94,11 +128,11 @@ class ApplicationSpec extends Specification {
 
       "delete expired sessions" in new WithServer {
         val ogAge = MockUserDBO.maxSessionAge
-        MockUserDBO.maxSessionAge = 3
+        MockUserDBO.maxSessionAge = 1
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
         assertCreated(signUp)
-        Thread.sleep(5000)
-        val session = ApplicationSpec.this.users.getSession(getAuthToken(signUp).get.value)
+        Thread.sleep(2000)
+        val session = getSession(getAuthToken(signUp).get.value)
         session.isEmpty must equalTo(true)
         ApplicationSpec.this.users.removeAll()
         MockUserDBO.maxSessionAge = ogAge
@@ -106,6 +140,24 @@ class ApplicationSpec extends Specification {
     }
 
     "signUp" should {
+
+      "complete sso" in new WithServer {
+        // Get the sign up form to cache the SSO request
+        val request = FakeRequest(GET, "/signup" + ApplicationSpec.this.ssoQuery)
+        val showSignUp = route(ApplicationSpec.this.app, request).get
+        status(showSignUp) must equalTo(OK)
+        val ssoToken = getSSOToken(showSignUp)
+        ssoToken.isDefined must equalTo(true)
+
+        // Complete account creation
+        val signUp = doSignUp(FakeRequest(POST, "/signup").withSession("sso" -> ssoToken.get))
+        assertCreated(signUp)
+        assertSSOSuccess(signUp)
+
+        ApplicationSpec.this.users.removeAll()
+      }
+
+
       "create user" in new WithServer {
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
         assertCreated(signUp)
@@ -120,8 +172,7 @@ class ApplicationSpec extends Specification {
       "fail with taken email" in {
         val signUp = doSignUp(
           request = FakeRequest(POST, "/signup"),
-          username = randomString(10),
-          password = randomString(10))
+          username = randomString(10))
         status(signUp) must equalTo(SEE_OTHER)
         assertHasError(signUp, "error.unique.email")
       }
@@ -129,8 +180,7 @@ class ApplicationSpec extends Specification {
       "fail with taken username" in {
         val signUp = doSignUp(
           request = FakeRequest(POST, "/signup"),
-          email = "johnsmith@example.com",
-          password = randomString(10))
+          email = "johnsmith@example.com")
         status(signUp) must equalTo(SEE_OTHER)
         assertHasError(signUp, "error.unique.username")
       }
@@ -175,6 +225,18 @@ class ApplicationSpec extends Specification {
         val logIn = doLogIn(FakeRequest(POST, "/login"), FakeUser.username, "franksandbeans")
         status(logIn) must equalTo(SEE_OTHER)
         assertHasError(logIn, "error.verify.user")
+      }
+
+      "complete sso" in new WithServer {
+        val showLogIn = route(ApplicationSpec.this.app, FakeRequest(GET, "/login" + ApplicationSpec.this.ssoQuery)).get
+        status(showLogIn) must equalTo(OK)
+        val ssoToken = getSSOToken(showLogIn)
+        ssoToken.isDefined must equalTo(true)
+
+        val request = FakeRequest(POST, "/login").withSession("sso" -> ssoToken.get)
+        val logIn = doLogIn(request, FakeUser.username, FakeUser.password)
+        assertAuthenticated(logIn)
+        assertSSOSuccess(logIn)
       }
 
       "success" in new WithServer {

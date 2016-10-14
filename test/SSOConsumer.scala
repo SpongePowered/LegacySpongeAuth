@@ -7,15 +7,27 @@ import javax.crypto.spec.SecretKeySpec
 
 import models.User
 import org.apache.commons.codec.binary.Hex
+import play.api.mvc.Results._
+import play.api.mvc.{Handler, RequestHeader}
+import play.api.routing.Router._
+import play.api.http.HttpVerbs._
+import play.api.mvc._
+import play.api.routing.SimpleRouter
+
+import scala.runtime.AbstractPartialFunction
 
 /**
   * Manages authentication to Sponge services.
   */
-class SSOConsumer(secret: String) {
+class SSOConsumer {
+
+  var secret: String = _
 
   val CharEncoding = "UTF-8"
   val Algo = "HmacSHA256"
   val Random = new SecureRandom
+
+  val Router = new Router
 
   /**
     * Returns the URL with a generated SSO payload to the SSO instance.
@@ -76,6 +88,37 @@ class SSOConsumer(secret: String) {
     val keySpec = new SecretKeySpec(this.secret.getBytes(this.CharEncoding), this.Algo)
     hmac.init(keySpec)
     Hex.encodeHexString(hmac.doFinal(data))
+  }
+
+  class Router extends SimpleRouter {
+
+    val ConsumeSSO = "/test/sso_consume"
+
+    def routes: Routes = new AbstractPartialFunction[RequestHeader, Handler] {
+      def isDefinedAt(x: RequestHeader): Boolean = x.path.equals(ConsumeSSO)
+      override def applyOrElse[A <: RequestHeader, B >: Handler](rh: A, default: A => B) = {
+        (rh.method, rh.path) match {
+          case (GET, ConsumeSSO) => consumeSSO(rh.getQueryString("sso"), rh.getQueryString("sig"))
+          case _ => default(rh)
+        }
+      }
+    }
+
+    def consumeSSO(sso: Option[String], sig: Option[String]) = Action {
+      if (sso.isEmpty || sig.isEmpty)
+        BadRequest
+      else {
+        SSOConsumer.this.authenticate(sso.get, sig.get) match {
+          case None =>
+            BadRequest
+          case Some(user) =>
+            if (!user.username.equals(FakeUser.username) || !user.email.equalsIgnoreCase(FakeUser.email))
+              BadRequest
+            else
+              Ok
+        }
+      }
+    }
   }
 
 }
