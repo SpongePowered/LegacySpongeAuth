@@ -29,6 +29,7 @@ trait Mailer extends Runnable {
 
   val smtpHost: String
   val smtpPort: Int = 465
+  val transportProtocol: String = "smtps"
 
   /** The rate at which to send emails */
   val interval: FiniteDuration = 30.seconds
@@ -38,21 +39,24 @@ trait Mailer extends Runnable {
   val properties: Map[String, Any] = Map.empty
   var queue: Seq[Email] = Seq.empty
 
+  var suppressLogger = false
   val Logger = play.api.Logger("Mailer")
 
   private var session: Session = _
+
+  private def log(msg: String) = if (!this.suppressLogger) Logger.info(msg)
 
   /**
     * Configures, initializes, and starts this Mailer.
     */
   def start() = {
-    Security.addProvider(new Provider())
+    Security.addProvider(new Provider)
     val props = System.getProperties
     for (prop <- this.properties.keys)
-      props.setProperty(prop, this.properties.get(prop).toString)
+      props.setProperty(prop, this.properties(prop).toString)
     this.session = Session.getInstance(props)
     this.scheduler.schedule(this.interval, this.interval, this)
-    Logger.info("Started")
+    log("Started")
   }
 
   /**
@@ -61,7 +65,7 @@ trait Mailer extends Runnable {
     * @param email Email to send
     */
   def send(email: Email) = {
-    Logger.info("Sending email to " + email.recipient + "...")
+    log("Sending email to " + email.recipient + "...")
     val message = new MimeMessage(this.session)
     message.setFrom(this.email)
     message.setRecipients(RecipientType.TO, email.recipient)
@@ -69,7 +73,7 @@ trait Mailer extends Runnable {
     message.setContent(email.content.toString, "text/html")
     message.setSentDate(new Date())
 
-    val transport = this.session.getTransport("smtps")
+    val transport = this.session.getTransport(this.transportProtocol)
     transport.connect(this.smtpHost, this.smtpPort, this.username, this.password)
     transport.sendMessage(message, message.getAllRecipients)
     transport.close()
@@ -86,10 +90,10 @@ trait Mailer extends Runnable {
     * Sends all queued [[Email]]s.
     */
   def run() = {
-    Logger.info(s"Sending ${this.queue.size} queued emails...")
+    log(s"Sending ${this.queue.size} queued emails...")
     this.queue.foreach(send)
     this.queue = Seq.empty
-    Logger.info("Done.")
+    log("Done.")
   }
 
 }
@@ -104,6 +108,7 @@ class MailerImpl @Inject()(config: SSOConfig, actorSystem: ActorSystem) extends 
   override val password = this.conf.getString("password").get
   override val smtpHost = this.conf.getString("smtp.host").get
   override val smtpPort = this.conf.getInt("smtp.port").get
+  override val transportProtocol = this.conf.getString("transport.protocol").get
   override val interval = this.conf.getLong("interval").get.millis
   override val scheduler = this.actorSystem.scheduler
   override val properties = this.conf.getObject("properties").get.unwrapped().asScala.toMap

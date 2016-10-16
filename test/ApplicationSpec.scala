@@ -1,6 +1,8 @@
 import java.net.URLDecoder
 
 import db.UserDBO
+import mail.Mailer
+import models.EmailConfirmation
 import org.apache.commons.lang3.RandomStringUtils.{randomAlphanumeric => randomString}
 import org.junit.runner._
 import org.specs2.mutable._
@@ -24,6 +26,7 @@ class ApplicationSpec extends Specification {
   val app = GuiceApplicationBuilder()
     .overrides(bind[CacheApi].to[MockCacheApi])
     .overrides(bind[UserDBO].to[MockUserDBO])
+    .overrides(bind[Mailer].to[MockMailer])
     .eagerlyLoaded()
     .additionalRouter(this.sso.Router)
     .in(Mode.Test)
@@ -35,6 +38,7 @@ class ApplicationSpec extends Specification {
   this.sso.secret = this.config.sso.getString("secret").get
 
   val users = this.injector.instanceOf[UserDBO]
+  val mailer = this.injector.instanceOf[Mailer].asInstanceOf[MockMailer]
 
   val ssoQuery = this.sso.getQuery()
   val badSSOQuery = this.sso.getQuery(badSig = true)
@@ -92,11 +96,20 @@ class ApplicationSpec extends Specification {
     clientSession.get must equalTo(FakeUser.username)
   }
 
-  def assertCreated(result: Future[play.api.mvc.Result]) = {
-    status(result) must equalTo(SEE_OTHER)
+  def assertNotAuthenticated(result: Future[play.api.mvc.Result]) = {
+    getAuthToken(result).isEmpty must equalTo(true)
+    session(result).get(Security.username).isEmpty must equalTo(true)
+  }
+
+  def assertCreated(result: Future[play.api.mvc.Result]): EmailConfirmation = {
+    status(result) must equalTo(OK)
+    assertNotAuthenticated(result)
     val user = ApplicationSpec.this.users.withName(FakeUser.username)
     user.isDefined must equalTo(true)
-    assertAuthenticated(result)
+
+    val confirmation = this.users.getEmailConfirmation(user.get.email)
+    confirmation.isDefined must equalTo(true)
+    confirmation.get
   }
 
   def assertSSOSuccess(result: Future[play.api.mvc.Result]) = {
@@ -126,17 +139,31 @@ class ApplicationSpec extends Specification {
       "redirect when unauthenticated" in {
         val home = route(ApplicationSpec.this.app, FakeRequest(GET, "/")).get
         status(home) must equalTo(SEE_OTHER)
+        assertNotAuthenticated(home)
       }
 
       "delete expired sessions" in new WithServer {
         val ogAge = MockUserDBO.maxSessionAge
         MockUserDBO.maxSessionAge = 1
+
+        // create the user
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
-        assertCreated(signUp)
+        val confirmation = assertCreated(signUp)
+
+        // confirm the user's email
+        Thread.sleep(1000) // wait for mailer
+        val token = ApplicationSpec.this.mailer.getToken(confirmation.email)
+        token.isDefined must equalTo(true)
+        val confirmCall = route(ApplicationSpec.this.app, FakeRequest(GET, "/email/confirm/" + token.get)).get
+        status(confirmCall) must equalTo(SEE_OTHER)
+        assertAuthenticated(confirmCall)
+
+        // ensure session will expire
         Thread.sleep(2000)
-        val session = getSession(getAuthToken(signUp).get.value)
+        val session = getSession(getAuthToken(confirmCall).get.value)
         session.isEmpty must equalTo(true)
         ApplicationSpec.this.users.removeAll()
+
         MockUserDBO.maxSessionAge = ogAge
       }
     }
@@ -146,6 +173,7 @@ class ApplicationSpec extends Specification {
         val request = FakeRequest(GET, "/signup" + ApplicationSpec.this.badSSOQuery)
         val showSignUp = route(ApplicationSpec.this.app, request).get
         status(showSignUp) must equalTo(OK)
+        assertNotAuthenticated(showSignUp)
         getSSOToken(showSignUp).isEmpty must equalTo(true)
       }
 
@@ -154,21 +182,39 @@ class ApplicationSpec extends Specification {
         val request = FakeRequest(GET, "/signup" + ApplicationSpec.this.ssoQuery)
         val showSignUp = route(ApplicationSpec.this.app, request).get
         status(showSignUp) must equalTo(OK)
+        assertNotAuthenticated(showSignUp)
         val ssoToken = getSSOToken(showSignUp)
         ssoToken.isDefined must equalTo(true)
 
         // Complete account creation
-        val signUp = doSignUp(FakeRequest(POST, "/signup").withSession("sso" -> ssoToken.get))
-        assertCreated(signUp)
-        assertSSOSuccess(signUp)
+        val signUp = doSignUp(FakeRequest(POST, "/signup"))
+        val confirmation = assertCreated(signUp)
+
+        Thread.sleep(1000) // wait for mailer
+        val token = ApplicationSpec.this.mailer.getToken(confirmation.email)
+        token.isDefined must equalTo(true)
+        val confirmRequest = FakeRequest(GET, "/email/confirm/" + token.get).withSession("sso" -> ssoToken.get)
+        val confirmCall = route(ApplicationSpec.this.app, confirmRequest).get
+        status(confirmCall) must equalTo(SEE_OTHER)
+        assertAuthenticated(confirmCall)
+
+        // Follow redirects to SSO origin
+        assertSSOSuccess(confirmCall)
 
         ApplicationSpec.this.users.removeAll()
       }
 
       "create user" in new WithServer {
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
-        assertCreated(signUp)
-        authToken = getAuthToken(signUp).get
+        val confirmation = assertCreated(signUp)
+
+        Thread.sleep(1000)
+        val token = ApplicationSpec.this.mailer.getToken(confirmation.email)
+        token.isDefined must equalTo(true)
+        val confirmCall = route(ApplicationSpec.this.app, FakeRequest(GET, "/email/confirm/" + token.get)).get
+        status(confirmCall) must equalTo(SEE_OTHER)
+        assertAuthenticated(confirmCall)
+        authToken = getAuthToken(confirmCall).get
       }
 
       "fail when authenticated" in {

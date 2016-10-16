@@ -87,19 +87,19 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     if (this.users.current.isDefined)
       BadRequest
     else {
-      val signOn = SingleSignOn.bindFromRequest()
       this.forms.LogIn.bindFromRequest().fold(
         hasErrors => {
           val firstError = hasErrors.errors.head
-          val call = routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig))
+          val call = routes.Application.showLogIn(None, None)
           Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
           this.users.verify(formData.username, formData.password) match {
             case None =>
-              val call = routes.Application.showLogIn(signOn.map(_.payload), signOn.map(_.sig))
+              val call = routes.Application.showLogIn(None, None)
               Redirect(call).flashing("error" -> "error.verify.user")
             case Some(user) =>
+              val signOn = SingleSignOn.bindFromRequest()
               val cookie = this.users.createSessionCookie(this.users.createSession(user))
               val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
               Redirect(call).withSession(Security.username -> user.username).withCookies(cookie)
@@ -152,12 +152,11 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     if (this.users.current.isDefined)
       BadRequest
     else {
-      val signOn = SingleSignOn.bindFromRequest() // Retrieve a cached SSO request
       this.forms.SignUp.bindFromRequest.fold(
         hasErrors => {
           // User error
           val firstError = hasErrors.errors.head
-          val call = routes.Application.showSignUp(signOn.map(_.payload), signOn.map(_.sig))
+          val call = routes.Application.showSignUp(None, None)
           Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {

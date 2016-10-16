@@ -31,9 +31,9 @@ trait UserDBO {
   val emailConfirms = TableQuery[EmailConfirmationTable]
 
   /** The argument to be supplied to [[org.mindrot.jbcrypt.BCrypt.gensalt()]] */
-  val passwordSaltLogRounds: Int
+  val passwordSaltLogRounds: Int = 10
   /** The maximum wait time for database queries */
-  val timeout: Long
+  val timeout: Duration = 10.seconds
   /** The maximum age of a [[models.Session]] */
   val maxSessionAge: Int
   /** The maximum age of an [[EmailConfirmation]] */
@@ -44,7 +44,7 @@ trait UserDBO {
   import dbConfig.db
   import models.{Session => DbSession}
 
-  private def await[R](future: Future[R]): R = Await.result(future, timeout.millis)
+  private def await[R](future: Future[R]): R = Await.result(future, this.timeout)
 
   protected def theTime: Timestamp = new Timestamp(new Date().getTime)
 
@@ -248,7 +248,7 @@ trait UserDBO {
 final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider, config: SSOConfig) extends UserDBO {
   override val dbConfig = this.provider.get[JdbcProfile]
   override val passwordSaltLogRounds = this.config.sso.getInt("password.saltLogRounds").get
-  override val timeout = this.config.db.getLong("timeout").get
+  override val timeout = this.config.db.getLong("timeout").get.millis
   override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get
 }

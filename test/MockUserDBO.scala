@@ -9,9 +9,8 @@ import slick.driver.JdbcProfile
 final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfigProvider) extends UserDBO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
-  override val passwordSaltLogRounds = 10
-  override val timeout: Long = 10000
   override val maxSessionAge = MockUserDBO.maxSessionAge
+  override val maxEmailConfirmationAge: Long = 10000
 
 }
 

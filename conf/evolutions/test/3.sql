@@ -1,7 +1,7 @@
 # --- !Ups
 
 alter table sessions
-  add constraint sessions_user_fkey
+add constraint sessions_user_fkey
 FOREIGN KEY (username)
 REFERENCES users(username)
 on delete cascade;
