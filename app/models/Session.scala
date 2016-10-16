@@ -1,9 +1,9 @@
 package models
 
 import java.sql.Timestamp
-import java.util.Date
 
 import db.UserDBO
+import db.schema.SessionTable
 
 /**
   * Represents a [[User]] session associated with some device.
@@ -16,9 +16,12 @@ import db.UserDBO
   */
 case class Session(id: Option[Int] = None,
                    createdAt: Timestamp,
-                   expiration: Timestamp,
+                   override val expiration: Timestamp,
                    username: String,
-                   token: String) {
+                   override val token: String) extends TokenExpirable {
+
+  override type M = Session
+  override type T = SessionTable
 
   def this(createdAt: Timestamp, expiration: Timestamp, username: String, token: String)
   = this(None, createdAt, expiration, username, token)
@@ -30,12 +33,5 @@ case class Session(id: Option[Int] = None,
     * @return       Associated User
     */
   def user(implicit users: UserDBO) = users.withName(this.username).get
-
-  /**
-    * Returns true if this Session has expired and should no longer be considered valid.
-    *
-    * @return True if expired
-    */
-  def hasExpired: Boolean = this.expiration.before(new Date)
 
 }

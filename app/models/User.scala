@@ -19,6 +19,7 @@ import form.SignUpForm
 case class User(id: Option[Int] = None,
                 createdAt: Option[Timestamp] = None,
                 email: String,
+                isEmailConfirmed: Boolean = false,
                 username: String,
                 password: String,
                 mcUsername: Option[String] = None,

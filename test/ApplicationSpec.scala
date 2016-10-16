@@ -36,7 +36,6 @@ class ApplicationSpec extends Specification {
 
   val users = this.injector.instanceOf[UserDBO]
 
-  val ssoRoute = "/test/sso_consume"
   val ssoQuery = this.sso.getQuery()
   val badSSOQuery = this.sso.getQuery(badSig = true)
 

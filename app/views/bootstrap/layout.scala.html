@@ -4,7 +4,8 @@ this.
 *@
 @import play.twirl.api.Html
 @import sso.SSOConfig
-@(title: String)(content: Html)(implicit config: SSOConfig, messages: Messages)
+@(title: String, header: Boolean = true, footer: Boolean = true)(content: Html)(implicit config: SSOConfig,
+        messages: Messages, request: Request[_])
 
 <!DOCTYPE html>
 <html>
@@ -16,17 +17,24 @@ this.
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="icon" type="image/png" href="@config.sponge.getString("icon").get">
-        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/fontawesome/font-awesome.css")">
-        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("bootstrap/css/bootstrap.min.css")" />
-        <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/main.css")" />
+        <link rel="stylesheet" type="text/css"
+              href="@routes.Assets.at("stylesheets/fontawesome/font-awesome.css").absoluteURL()">
+        <link rel="stylesheet" type="text/css"
+              href="@routes.Assets.at("bootstrap/css/bootstrap.min.css").absoluteURL()" />
+        <link rel="stylesheet" type="text/css"
+              href="@routes.Assets.at("stylesheets/main.css").absoluteURL()" />
 
         <script type="text/javascript" src="@routes.Assets.at("javascripts/jquery-2.2.1.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("bootstrap/js/bootstrap.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("javascripts/svg.js")"></script>
     </head>
     <body>
-        @bootstrap.header()
+        @if(header) {
+            @bootstrap.header()
+        }
         @content
-        @bootstrap.footer()
+        @if(footer) {
+            @bootstrap.footer()
+        }
     </body>
 </html>

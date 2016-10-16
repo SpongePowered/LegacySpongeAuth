@@ -1,6 +1,7 @@
 package form
 
-import db.{UserDBO, UserTable}
+import db.schema.UserTable
+import db.UserDBO
 import play.api.data.Forms._
 import play.api.data.Mapping
 import sso.SSOConfig

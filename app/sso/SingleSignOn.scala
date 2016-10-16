@@ -11,6 +11,8 @@ import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.mvc.Session
 
+import scala.concurrent.duration.Duration
+
 /**
   * Represents an incoming request for single-sign-on authentication. This
   * object can potentially survive across multiple requests and ultimately
@@ -29,9 +31,8 @@ import play.api.mvc.Session
   * This instance is kept alive through multiple requests by caching it using
   * a UUID that is also given to the Session for later retrieval.
   *
-  * TODO: Expiration?
-  *
   * @param secret   SSO secret key
+  * @param maxAge   The maximum age of this object once it has been cached
   * @param payload  Incoming payload
   * @param sig      Incoming signature
   * @param id       Unique ID paired to the Session
@@ -39,6 +40,7 @@ import play.api.mvc.Session
   * @param cacheApi CacheApi instance
   */
 class SingleSignOn(secret: String,
+                   maxAge: Duration,
                    val payload: String,
                    val sig: String,
                    var id: String = null)
@@ -97,7 +99,7 @@ class SingleSignOn(secret: String,
     */
   def cache(): SingleSignOn = {
     this.id = UUID.randomUUID().toString
-    this.cacheApi.set(id, this)
+    this.cacheApi.set(id, this, this.maxAge)
     Logger.info("Cached SSO request with value: " + this)
     this
   }
@@ -109,7 +111,7 @@ class SingleSignOn(secret: String,
     Hex.encodeHexString(hmac.doFinal(data))
   }
 
-  override def toString() = {
+  override def toString = {
     "SingleSignOn {\n" +
       s"\tID: $id\n" +
       s"\tPayload: $payload\n" +
@@ -125,6 +127,7 @@ object SingleSignOn {
     * Parses an incoming SSO request.
     *
     * @param secret   SSO secret
+    * @param maxAge   The maximum age of the SSO once cached
     * @param sso      Incoming payload
     * @param sig      Incoming signature
     * @param session  Session of request
@@ -132,11 +135,12 @@ object SingleSignOn {
     * @return         SSO instance if was a SSO request
     */
   def parse(secret: String,
+            maxAge: Duration,
             sso: Option[String],
             sig: Option[String])
            (implicit session: Session, cache: CacheApi): Option[SingleSignOn] = {
     sso.flatMap(payload => sig.flatMap(sig => {
-      val signOn = new SingleSignOn(secret, payload, sig)
+      val signOn = new SingleSignOn(secret, maxAge, payload, sig)
       if (signOn.validateSignature()) {
         Logger.info("Parsed SSO request of value: " + signOn)
         Some(signOn)
@@ -158,7 +162,6 @@ object SingleSignOn {
       val so = cache.get[SingleSignOn](id)
       if (so.isDefined)
         Logger.info("Retrieved SSO request from cache of value: " + so.get)
-      cache.remove(id)
       so
     }
   }

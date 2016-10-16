@@ -32,4 +32,9 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     "gh-username" -> optional(nonEmptyText).unique(_.ghUsername)
   )(SignUpForm.apply)(SignUpForm.unapply))
 
+  /**
+    * The form submitted to resend a confirmation email.
+    */
+  lazy val ResendConfirmationEmail = Form(single("email" -> email))
+
 }

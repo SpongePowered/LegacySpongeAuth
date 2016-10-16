@@ -1,5 +1,5 @@
 @import sso.SSOConfig
-@(user: User, redirect: Option[String])(implicit config: SSOConfig, messages: Messages)
+@(user: User, redirect: Option[String])(implicit config: SSOConfig, messages: Messages, request: Request[_])
 
 @bootstrap.layout(messages("home.title")) {
 

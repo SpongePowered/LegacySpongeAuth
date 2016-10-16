@@ -13,6 +13,7 @@ final class SSOConfig @Inject()(config: Configuration) {
   lazy val sponge = this.config.getConfig("sponge").get
   lazy val sso = this.config.getConfig("sso").get
   lazy val db = this.config.getConfig("db").get
+  lazy val mail = this.config.getConfig("mail").get
 
   /** Ensures that debug mode is enabled. */
   def checkDebug() = if (!this.sso.getBoolean("debug").get) throw new IllegalStateException("must be in debug mode")

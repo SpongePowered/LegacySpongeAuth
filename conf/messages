@@ -39,6 +39,7 @@ signup.ircNick.info     =   Join us on IRC often? Enter your IRC nick here
 signup.ghUsername       =   GitHub Username
 signup.ghUsername.info  =   Publish your software on GitHub? Enter your GitHub username here
 signup.optional         =   optional
+signup.confirmEmail     =   An email has been sent to the address <strong>{0}</strong>. Please confirm your email there to complete registration.
 
 login.title = Log in
 
@@ -46,3 +47,8 @@ home.title      =   Sponge Authentication Portal
 home.info       =   You are currently logged in as {0}.
 home.logout     =   Log out
 home.redirect   =   Returning to original site...
+
+email.confirm.title = SpongePowered
+email.confirm.message = Welcome to SpongePowered! Click the link below to confirm your new account with us.
+email.confirm.subject = Confirm your email with Sponge
+email.signature = Best regards,<br/>SpongePowered

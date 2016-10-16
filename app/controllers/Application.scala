@@ -4,22 +4,28 @@ import javax.inject.Inject
 
 import db.UserDBO
 import form.SSOForms
+import mail.{Emails, Mailer}
 import models.User
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import sso.{SSOConfig, SingleSignOn}
 
+import scala.concurrent.duration._
+
 /**
   * Main entry point for Sponge SSO.
   */
 final class Application @Inject()(override val messagesApi: MessagesApi,
                                   val forms: SSOForms,
+                                  val mailer: Mailer,
+                                  val emails: Emails,
                                   implicit val users: UserDBO,
                                   implicit val cache: CacheApi,
                                   implicit val config: SSOConfig) extends Controller with I18nSupport {
 
   private val ssoSecret = this.config.sso.getString("secret").get
+  private val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
 
   /**
     * Displays the "home" page. A user must be authenticated to view the home page.
@@ -32,7 +38,18 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
       case None =>
         Redirect(routes.Application.showLogIn(None, None))
       case Some(user) =>
-        Ok(views.html.home(user, redirect))
+        if (user.isEmailConfirmed)
+          Ok(views.html.home(user, redirect))
+        else {
+          this.users.getEmailConfirmation(user.email) match {
+            case None =>
+              val confirmation = this.users.createEmailConfirmation(user)
+              this.mailer.push(this.emails.confirmation(confirmation))
+              Ok(views.html.signup.confirmEmail(confirmation))
+            case Some(confirmation) =>
+              Ok(views.html.signup.confirmEmail(confirmation))
+          }
+        }
     }
   }
 
@@ -47,7 +64,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def showLogIn(sso: Option[String], sig: Option[String]) = Action { implicit request =>
     var result = Ok(views.html.logIn(sso, sig))
-    val signOn = SingleSignOn.parse(this.ssoSecret, sso, sig)
+    val signOn = SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig)
     this.users.current match {
       case None =>
         // User not logged in, cache SSO request
@@ -112,8 +129,8 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         and has SSO request.
     */
   def showSignUp(sso: Option[String], sig: Option[String]) = Action { implicit request =>
-    var result = Ok(views.html.signUp(sso, sig))
-    val signOn = SingleSignOn.parse(this.ssoSecret, sso, sig) // Parse the SSO request if any
+    var result = Ok(views.html.signup.view(sso, sig))
+    val signOn = SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig) // Parse the SSO request if any
     this.users.current match {
       case None =>
         signOn.foreach(so => result = result.withSession("sso" -> so.cache().id))
@@ -144,14 +161,52 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
-          // Create the user
-          val session = this.users.createUser(formData)
-          val user = session.user
-          val cookie = this.users.createSessionCookie(session)
-          val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
-          Redirect(call).withSession(Security.username -> user.username).withCookies(cookie)
+          // Create the user and send confirmation email
+          val confirmation = this.users.createUser(formData)
+          this.mailer.push(this.emails.confirmation(confirmation))
+          Ok(views.html.signup.confirmEmail(confirmation))
         }
       )
+    }
+  }
+
+  /**
+    * Marks an email with the specified confirmation token as confirmed.
+    *
+    * @param token Token of email confirmation
+    * @return BadRequest if token is not associated with email or redirect to
+    *         home page if successful
+    */
+  def confirmEmail(token: String) = Action { implicit request =>
+    this.users.confirmEmail(token) match {
+      case None =>
+        BadRequest
+      case Some(session) =>
+        val sso = SingleSignOn.bindFromRequest()
+        val user = session.user
+        val call = routes.Application.showHome(sso.map(_.getRedirect(user)))
+        val token = this.users.createSessionCookie(session)
+        Redirect(call).withSession(Security.username -> user.username).withCookies(token)
+    }
+  }
+
+  /**
+    * Deletes any old confirmations associated with the given email and creates
+    * and sends a new one.
+    *
+    * @return Bad request if no user is associated with the given email or Ok
+    *         if successful
+    */
+  def resendConfirmationEmail() = Action { implicit request =>
+    val email = this.forms.ResendConfirmationEmail.bindFromRequest().get.trim
+    this.users.withEmail(email) match {
+      case None =>
+        BadRequest
+      case Some(user) =>
+        this.users.deleteEmailConfirmation(user.email)
+        val newConfirmation = this.users.createEmailConfirmation(user)
+        this.mailer.push(this.emails.confirmation(newConfirmation))
+        Ok
     }
   }
 
@@ -164,7 +219,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *             signature, verification form otherwise
     */
   def showVerification(sso: Option[String], sig: Option[String]) = Action { implicit request =>
-    SingleSignOn.parse(this.ssoSecret, sso, sig) match {
+    SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
       case None =>
         BadRequest
       case Some(so) =>

@@ -1,0 +1,17 @@
+@import sso.SSOConfig
+@(emailConfirm: EmailConfirmation)(implicit messages: Messages, config: SSOConfig, request: Request[_])
+
+@confirmUrl = @{
+    routes.Application.confirmEmail(emailConfirm.token)
+}
+
+@bootstrap.layout(messages("email.confirm.title"), header = false, footer = false) {
+
+    <div class="container email">
+        <img width="100" src="@config.sponge.getString("logo").get" />
+        <p>@Html(messages("email.confirm.message"))</p>
+        <a href="@confirmUrl.absoluteURL()">@confirmUrl.absoluteURL()</a>
+        <p>@Html(messages("email.signature"))</p>
+    </div>
+
+}

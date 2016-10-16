@@ -1,0 +1,40 @@
+@import sso.SSOConfig
+@(emailConfirm: EmailConfirmation)(implicit messages: Messages, config: SSOConfig, request: Request[_])
+
+@bootstrap.layout(messages("signup.title")) {
+
+    <script type="text/javascript" src="@routes.Assets.at("javascripts/confirmEmail.js")"></script>
+    <script>var email = '@emailConfirm.email';</script>
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("signup.title")</h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="alert alert-success alert-dismissable" style="display: none;">
+                            <button type="button" class="close" data-dismiss="alert"
+                                    aria-label="@messages("general.close")">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <span class="message"></span>
+                        </div>
+
+                        <p>@Html(messages("signup.confirmEmail", emailConfirm.email))</p>
+
+                        <div class="pull-right">
+                            <a href="@routes.Application.logOut()" class="btn btn-default">Log out</a>
+                            <button class="btn btn-resend btn-primary">
+                                <i class="fa fa-spinner fa-spin" style="display: none;"></i>
+                                Resend
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
