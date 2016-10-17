@@ -5,7 +5,7 @@ import javax.inject.Inject
 import db.UserDBO
 import play.api.data.Form
 import play.api.data.Forms._
-import sso.SSOConfig
+import security.sso.SSOConfig
 
 /**
   * A collection of forms used by Sponge SSO.
@@ -27,6 +27,7 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     "email" -> email.unique(_.email),
     "username" -> username.unique(_.username),
     "password" -> password,
+    "2fa" -> optional(boolean),
     "mc-username" -> optional(nonEmptyText).unique(_.mcUsername),
     "irc-nick" -> optional(nonEmptyText).unique(_.ircNick),
     "gh-username" -> optional(nonEmptyText).unique(_.ghUsername)

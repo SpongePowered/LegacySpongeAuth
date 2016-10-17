@@ -1,4 +1,4 @@
-@import sso.SSOConfig
+@import security.sso.SSOConfig
 @import views.html.helper.form
 @(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
         request: Request[_])
@@ -39,6 +39,13 @@
                             @utils.inputField("gh-username", "signup.ghUsername", optional = true) {
                                 <input type="text" class="form-control" name="gh-username" />
                             }
+
+                            <div class="pull-left checkbox">
+                                <label>
+                                    <input type="checkbox" name="2fa" value="true" />
+                                    @messages("signup.2fa")
+                                </label>
+                            </div>
 
                             <div class="pull-right">
                                 <a href="@routes.Application.showLogIn(sso, sig)" class="btn btn-default">

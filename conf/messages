@@ -40,6 +40,7 @@ signup.ghUsername       =   GitHub Username
 signup.ghUsername.info  =   Publish your software on GitHub? Enter your GitHub username here
 signup.optional         =   optional
 signup.confirmEmail     =   An email has been sent to the address <strong>{0}</strong>. Please confirm your email there to complete registration.
+signup.2fa              =   Secure my account with two-factor authentication
 
 login.title = Log in
 
@@ -52,3 +53,6 @@ email.confirm.title = SpongePowered
 email.confirm.message = Welcome to SpongePowered! Click the link below to confirm your new account with us.
 email.confirm.subject = Confirm your email with Sponge
 email.signature = Best regards,<br/>SpongePowered
+
+2fa.setup.title = Setup two-factor authentication
+2fa.setup.info = Secure your account be setting up two-factor authentication on your account with a mobile app such as Google Authenticator.

@@ -9,7 +9,7 @@ import javax.mail.internet.{InternetAddress, MimeMessage}
 
 import akka.actor.{ActorSystem, Scheduler}
 import com.sun.net.ssl.internal.ssl.Provider
-import sso.SSOConfig
+import security.sso.SSOConfig
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

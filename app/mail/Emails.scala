@@ -5,7 +5,7 @@ import javax.inject.Inject
 import models.EmailConfirmation
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Request
-import sso.SSOConfig
+import security.sso.SSOConfig
 
 /**
   * Helper class for [[Email]] composition.

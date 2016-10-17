@@ -20,5 +20,6 @@ libraryDependencies ++= Seq(
   "org.postgresql"          %   "postgresql"              %   "9.4.1208.jre7",
   "com.github.tminglei"     %%  "slick-pg"                %   "0.12.0",
   "org.mindrot"             %   "jbcrypt"                 %   "0.3m",
-  "javax.mail"              %   "mail"                    %   "1.4.7"
+  "javax.mail"              %   "mail"                    %   "1.4.7",
+  "com.google.zxing"        %   "core"                    %   "3.3.0"
 )

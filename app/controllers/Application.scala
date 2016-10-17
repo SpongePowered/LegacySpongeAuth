@@ -8,7 +8,8 @@ import mail.{Emails, Mailer}
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import sso.{SSOConfig, SingleSignOn}
+import security.sso.{SSOConfig, SingleSignOn}
+import security.totp.qr.QrCodeRenderer
 
 import scala.concurrent.duration._
 
@@ -19,9 +20,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   val forms: SSOForms,
                                   val mailer: Mailer,
                                   val emails: Emails,
+                                  val qrRenderer: QrCodeRenderer,
                                   implicit val users: UserDBO,
                                   implicit val cache: CacheApi,
-                                  implicit val config: SSOConfig) extends Controller with I18nSupport {
+                                  implicit val config: SSOConfig) extends Controller with I18nSupport with Secured {
 
   private val ssoSecret = this.config.sso.getString("secret").get
   private val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
@@ -186,7 +188,11 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           val confirmation = this.users.createUser(formData)
           val user = confirmation.user
           this.mailer.push(this.emails.confirmation(confirmation))
-          Redirect(routes.Application.showHome()).withSession(Security.username -> user.username)
+          val call = if (formData.setup2fa)
+            routes.Application.show2faSetup()
+          else
+            routes.Application.showHome()
+          Redirect(call).withSession(Security.username -> user.username)
         }
       )
     }
@@ -288,6 +294,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           }
         )
     }
+  }
+
+  def show2faSetup() = Authenticated { implicit request =>
+    Ok(views.html.tfa.setup(this.qrRenderer.render("test render", 300, 300)))
   }
 
   /**

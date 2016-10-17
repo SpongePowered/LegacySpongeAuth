@@ -1,15 +1,13 @@
-package sso
+package security.sso
 
 import java.net.{URLDecoder, URLEncoder}
 import java.util.{Base64, UUID}
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 import models.User
-import org.apache.commons.codec.binary.Hex
 import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.mvc.{Cookie, Request, Result, Session}
+import security.CryptoUtils.hmac_sha256
 
 import scala.concurrent.duration.Duration
 
@@ -52,7 +50,6 @@ class SingleSignOn(secret: String,
                    cacheApi: CacheApi) {
 
   private val CharEncoding = "UTF-8"
-  private val Algo = "HmacSHA256"
 
   /**
     * Validates the incoming signature.
@@ -63,7 +60,7 @@ class SingleSignOn(secret: String,
     val params = decodePayload().split('&')
     if (params.exists(_.equals("validate=true")))
       this.ignoreSession = true
-    hmac_sha256(payload.getBytes(CharEncoding)).equals(sig)
+    hmac_sha256(this.secret, payload.getBytes(CharEncoding)).equals(sig)
   }
 
   /**
@@ -95,7 +92,7 @@ class SingleSignOn(secret: String,
 
     newPayload = new String(Base64.getEncoder.encode(newPayload.getBytes(this.CharEncoding)))
     val urlEncodedPayload = URLEncoder.encode(newPayload, this.CharEncoding)
-    val newSig = hmac_sha256(newPayload.getBytes(this.CharEncoding))
+    val newSig = hmac_sha256(this.secret, newPayload.getBytes(this.CharEncoding))
 
     s"$returnUrl?sso=$urlEncodedPayload&sig=$newSig"
   }
@@ -114,13 +111,6 @@ class SingleSignOn(secret: String,
     this.cacheApi.set(id, this, this.maxAge)
     Logger.info("Cached SSO request with value: " + this)
     this
-  }
-
-  private def hmac_sha256(data: Array[Byte]): String = {
-    val hmac = Mac.getInstance(this.Algo)
-    val keySpec = new SecretKeySpec(this.secret.getBytes(this.CharEncoding), this.Algo)
-    hmac.init(keySpec)
-    Hex.encodeHexString(hmac.doFinal(data))
   }
 
   override def toString = {

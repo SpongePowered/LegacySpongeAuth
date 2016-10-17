@@ -1,13 +1,19 @@
 GET     /                           @controllers.Application.showHome()
 GET     /login                      @controllers.Application.showLogIn(sso: Option[String], sig: Option[String])
 POST    /login                      @controllers.Application.logIn()
+
 GET     /logout                     @controllers.Application.logOut()
+
 GET     /signup                     @controllers.Application.showSignUp(sso: Option[String], sig: Option[String])
 POST    /signup                     @controllers.Application.signUp()
+
 GET     /verify                     @controllers.Application.showVerification(sso: Option[String], sig: Option[String])
 POST    /verify                     @controllers.Application.verify()
+
 POST    /email/confirm/resend       @controllers.Application.resendConfirmationEmail()
 GET     /email/confirm/:token       @controllers.Application.confirmEmail(token)
+
+GET     /2fa/setup                  @controllers.Application.show2faSetup()
 
 GET     /reset                      @controllers.Application.reset()
 

@@ -8,8 +8,6 @@ import play.api.test.Helpers._
 @RunWith(classOf[JUnitRunner])
 final class SSOSpec extends Specification with ApplicationHelpers {
 
-  this.users.removeAll()
-
   "Single Sign On" should {
     "via sign up" in {
       "reject invalid signatures" in {
@@ -91,7 +89,7 @@ final class SSOSpec extends Specification with ApplicationHelpers {
       }
 
       "reject signatures that require verification" in new WithServer {
-        // Send sso request
+        // Send security.sso request
         val ssoQuery = SSOSpec.this.sso.getQuery(verify = true)
         val request = FakeRequest(GET, "/login" + ssoQuery)
         val showLogIn = route(SSOSpec.this.app, request).get
@@ -126,7 +124,7 @@ final class SSOSpec extends Specification with ApplicationHelpers {
     }
 
     "via verify" in {
-      "fail without sso" in {
+      "fail without security.sso" in {
         val verify = route(this.app, FakeRequest(GET, "/verify")).get
         status(verify) must equalTo(BAD_REQUEST)
       }

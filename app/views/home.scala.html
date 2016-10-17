@@ -1,4 +1,4 @@
-@import sso.SSOConfig
+@import security.sso.SSOConfig
 @(user: User, redirect: Option[String])(implicit config: SSOConfig, messages: Messages, request: Request[_])
 
 @bootstrap.layout(messages("home.title")) {

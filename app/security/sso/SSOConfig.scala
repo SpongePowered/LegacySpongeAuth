@@ -1,4 +1,4 @@
-package sso
+package security.sso
 
 import javax.inject.Inject
 

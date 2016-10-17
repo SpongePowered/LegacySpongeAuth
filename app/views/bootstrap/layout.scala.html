@@ -3,7 +3,7 @@ Base layout template for website. Most templates within the project will extend
 this.
 *@
 @import play.twirl.api.Html
-@import sso.SSOConfig
+@import security.sso.SSOConfig
 @(title: String, header: Boolean = true, footer: Boolean = true)(content: Html)(implicit config: SSOConfig,
         messages: Messages, request: Request[_])
 

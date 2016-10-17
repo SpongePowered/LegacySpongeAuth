@@ -1,0 +1,23 @@
+@import security.sso.SSOConfig
+@import security.totp.qr.RenderedQrCode
+@(qr: RenderedQrCode)(implicit messages: Messages, request: Request[_], config: SSOConfig)
+
+@bootstrap.layout(messages("2fa.setup.title")) {
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("2fa.setup.title")</h4>
+                    </div>
+                    <div class="panel-body">
+                        <p>@messages("2fa.setup.info")</p>
+                        <img src="@qr.toDataUri()" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

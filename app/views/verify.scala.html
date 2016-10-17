@@ -1,4 +1,4 @@
-@import sso.SSOConfig
+@import security.sso.SSOConfig
 @import views.html.helper.form
 @(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
         request: Request[_])

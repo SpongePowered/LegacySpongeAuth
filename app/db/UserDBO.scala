@@ -13,7 +13,7 @@ import play.api.mvc.{Cookie, Request, Security}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 import slick.driver.PostgresDriver.api._
-import sso.SSOConfig
+import security.sso.SSOConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

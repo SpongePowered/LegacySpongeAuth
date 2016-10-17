@@ -4,7 +4,7 @@ import db.schema.UserTable
 import db.UserDBO
 import play.api.data.Forms._
 import play.api.data.Mapping
-import sso.SSOConfig
+import security.sso.SSOConfig
 import slick.driver.PostgresDriver.api._
 
 /**
