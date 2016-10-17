@@ -5,6 +5,7 @@ import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+import backend.FakeUser
 import models.User
 import org.apache.commons.codec.binary.Hex
 import play.api.mvc.Results._
@@ -18,6 +19,8 @@ import scala.runtime.AbstractPartialFunction
 
 /**
   * Manages authentication to Sponge services.
+  *
+  * Mostly taken from Ore implementation.
   */
 class SSOConsumer {
 

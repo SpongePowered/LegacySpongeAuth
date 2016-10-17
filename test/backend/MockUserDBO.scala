@@ -1,3 +1,5 @@
+package backend
+
 import javax.inject.Inject
 
 import db.UserDBO

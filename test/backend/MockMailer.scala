@@ -1,3 +1,5 @@
+package backend
+
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
@@ -23,7 +25,7 @@ class MockMailer @Inject()(actorSystem: ActorSystem) extends Mailer {
   override def send(email: Email) = this.sentEmails += email.recipient -> email
 
   //noinspection ComparingUnrelatedTypes
-  def getToken(email: String): Option[String] = {
+  def scrapeToken(email: String): Option[String] = {
     this.sentEmails.get(email).map(_.content.toString).map { rawHtml =>
       val tokenPrefix = "/email/confirm/"
       val tokenStartIndex = rawHtml.indexOf(tokenPrefix)

@@ -5,7 +5,6 @@ import javax.inject.Inject
 import db.UserDBO
 import form.SSOForms
 import mail.{Emails, Mailer}
-import models.User
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
@@ -30,23 +29,42 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   /**
     * Displays the "home" page. A user must be authenticated to view the home page.
     *
-    * @param redirect Final destination
-    * @return         Redirect to log in if not authenticated, home page otherwise
+    * @return Redirect to log in if not authenticated, home page otherwise
     */
-  def showHome(redirect: Option[String]) = Action { implicit request =>
+  def showHome() = Action { implicit request =>
     this.users.current match {
       case None =>
+        // Redirect to log in page
         Redirect(routes.Application.showLogIn(None, None))
       case Some(user) =>
-        if (user.isEmailConfirmed)
-          Ok(views.html.home(user, redirect))
-        else {
+        // User found
+        if (user.isEmailConfirmed) {
+          // Look for cached SSO request
+          SingleSignOn.bindFromRequest() match {
+            case None =>
+              // No SSO request, just show them the normal page
+              Ok(views.html.home(user, None))
+            case Some(sso) =>
+              // SSO request exists
+              if (sso.ignoreSession) {
+                // We've been told to ignore session data, the SSO redirect
+                // must go through verify()
+                Redirect(routes.Application.showVerification(None, None))
+              } else {
+                // Complete SSO request
+                Ok(views.html.home(user, Some(sso.getRedirect(user)))).discardingCookies(DiscardingCookie("_sso"))
+              }
+          }
+        } else {
+          // The user hasn't confirmed their email, instruct them to do so
           this.users.getEmailConfirmation(user.email) match {
             case None =>
+              // Send a new confirmation
               val confirmation = this.users.createEmailConfirmation(user)
               this.mailer.push(this.emails.confirmation(confirmation))
               Ok(views.html.signup.confirmEmail(confirmation))
             case Some(confirmation) =>
+              // A confirmation is already out
               Ok(views.html.signup.confirmEmail(confirmation))
           }
         }
@@ -63,16 +81,13 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         has SSO request
     */
   def showLogIn(sso: Option[String], sig: Option[String]) = Action { implicit request =>
-    var result = Ok(views.html.logIn(sso, sig))
-    val signOn = SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig)
-    this.users.current match {
-      case None =>
-        // User not logged in, cache SSO request
-        signOn.foreach(so => result = result.withSession("sso" -> so.cache().id))
-      case Some(user) =>
-        result = onSessionFound(user, signOn)
-    }
-    result
+    var result = Ok(views.html.logIn())
+    // Parse and cache any incoming SSO request
+    val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
+    // If the user is already logged in, redirect home
+    this.users.current.foreach(user => result = Redirect(routes.Application.showHome()))
+    // Return result with SSO reference (if any)
+    SingleSignOn.addToResult(result, signOn)
   }
 
   /**
@@ -84,24 +99,30 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         SSO request.
     */
   def logIn() = Action { implicit request =>
-    if (this.users.current.isDefined)
+    if (this.users.current.isDefined) {
+      // User is already authenticated
       BadRequest
-    else {
+    } else {
+      // Process form data
       this.forms.LogIn.bindFromRequest().fold(
         hasErrors => {
+          // User error, send them an error
           val firstError = hasErrors.errors.head
           val call = routes.Application.showLogIn(None, None)
           Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
         },
         formData => {
+          // Form data validated, verify the username and password
           this.users.verify(formData.username, formData.password) match {
             case None =>
+              // Validation failed
               val call = routes.Application.showLogIn(None, None)
               Redirect(call).flashing("error" -> "error.verify.user")
             case Some(user) =>
-              val signOn = SingleSignOn.bindFromRequest()
+              // Success, create a new session and give the client a cookie to
+              // remember us by
               val cookie = this.users.createSessionCookie(this.users.createSession(user))
-              val call = routes.Application.showHome(signOn.map(_.getRedirect(user)))
+              val call = routes.Application.showHome()
               Redirect(call).withSession(Security.username -> user.username).withCookies(cookie)
           }
         }
@@ -115,6 +136,8 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     * @return Redirection to login form
     */
   def logOut() = Action { implicit request =>
+    // Clear the current session, delete auth cookie, and delete the
+    // server-side Session
     request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
     Redirect(routes.Application.showLogIn(None, None)).withNewSession.discardingCookies(DiscardingCookie("_token"))
   }
@@ -130,14 +153,12 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def showSignUp(sso: Option[String], sig: Option[String]) = Action { implicit request =>
     var result = Ok(views.html.signup.view(sso, sig))
-    val signOn = SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig) // Parse the SSO request if any
-    this.users.current match {
-      case None =>
-        signOn.foreach(so => result = result.withSession("sso" -> so.cache().id))
-      case Some(user) =>
-        result = onSessionFound(user, signOn)
-    }
-    result
+    // Parse and cache any incoming SSO request
+    val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
+    // If the user is already logged in, redirect home
+    this.users.current.foreach(user => result = Redirect(routes.Application.showHome()))
+    // Return result with SSO request reference (if any)
+    SingleSignOn.addToResult(result, signOn)
   }
 
   /**
@@ -150,6 +171,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def signUp() = Action { implicit request =>
     if (this.users.current.isDefined)
+      // User already authenticated
       BadRequest
     else {
       this.forms.SignUp.bindFromRequest.fold(
@@ -162,8 +184,9 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         formData => {
           // Create the user and send confirmation email
           val confirmation = this.users.createUser(formData)
+          val user = confirmation.user
           this.mailer.push(this.emails.confirmation(confirmation))
-          Ok(views.html.signup.confirmEmail(confirmation))
+          Redirect(routes.Application.showHome()).withSession(Security.username -> user.username)
         }
       )
     }
@@ -179,13 +202,14 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def confirmEmail(token: String) = Action { implicit request =>
     this.users.confirmEmail(token) match {
       case None =>
+        // Email confirmation of token doesn't exist or has expired
         BadRequest
       case Some(session) =>
-        val sso = SingleSignOn.bindFromRequest()
+        // New server-side Session created, give client a cookie to remember
+        // it by
         val user = session.user
-        val call = routes.Application.showHome(sso.map(_.getRedirect(user)))
         val token = this.users.createSessionCookie(session)
-        Redirect(call).withSession(Security.username -> user.username).withCookies(token)
+        Redirect(routes.Application.showHome()).withSession(Security.username -> user.username).withCookies(token)
     }
   }
 
@@ -200,8 +224,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     val email = this.forms.ResendConfirmationEmail.bindFromRequest().get.trim
     this.users.withEmail(email) match {
       case None =>
+        // No user with email exists
         BadRequest
       case Some(user) =>
+        // Delete any old confirmations and create and send a new one
         this.users.deleteEmailConfirmation(user.email)
         val newConfirmation = this.users.createEmailConfirmation(user)
         this.mailer.push(this.emails.confirmation(newConfirmation))
@@ -218,11 +244,13 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *             signature, verification form otherwise
     */
   def showVerification(sso: Option[String], sig: Option[String]) = Action { implicit request =>
-    SingleSignOn.parse(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
+    SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
       case None =>
+        // SSO request required
         BadRequest
       case Some(so) =>
-        Ok(views.html.verify(sso, sig)).withSession("sso" -> so.cache().id)
+        // Show form with SSO reference
+        SingleSignOn.addToResult(Ok(views.html.verify(sso, sig)), Some(so))
     }
   }
 
@@ -235,21 +263,27 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def verify() = Action { implicit request =>
     SingleSignOn.bindFromRequest() match {
       case None =>
+        // SSO required
         BadRequest
       case Some(so) =>
+        // Validate log in form
         this.forms.LogIn.bindFromRequest().fold(
           hasErrors => {
+            // User error
             val firstError = hasErrors.errors.head
             val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
             Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
           },
           formData => {
+            // Verify username and password
             this.users.verify(formData.username, formData.password) match {
               case None =>
+                // Verification failed
                 val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
                 Redirect(call).flashing("error" -> "error.verify.user")
               case Some(user) =>
-                Redirect(routes.Application.showHome(Some(so.getRedirect(user))))
+                // Redirect directly back to SSO origin
+                Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
             }
           }
         )
@@ -266,8 +300,5 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     this.users.removeAll()
     Redirect(routes.Application.showSignUp(None, None))
   }
-
-  private def onSessionFound(user: User, sso: Option[SingleSignOn])
-  = Redirect(routes.Application.showHome(sso.map(_.getRedirect(user))))
 
 }

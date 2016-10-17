@@ -1,4 +1,4 @@
-GET     /                           @controllers.Application.showHome(redirect: Option[String])
+GET     /                           @controllers.Application.showHome()
 GET     /login                      @controllers.Application.showLogIn(sso: Option[String], sig: Option[String])
 POST    /login                      @controllers.Application.logIn()
 GET     /logout                     @controllers.Application.logOut()

@@ -1,7 +1,6 @@
 @import sso.SSOConfig
 @import views.html.helper.form
-@(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
-        request: Request[_])
+@()(implicit config: SSOConfig, messages: Messages, flash: Flash, request: Request[_])
 
 @bootstrap.layout(messages("login.title")) {
 
@@ -26,7 +25,7 @@
                             }
 
                             <div class="pull-right">
-                                <a href="@routes.Application.showSignUp(sso, sig)" class="btn btn-default">
+                                <a href="@routes.Application.showSignUp(None, None)" class="btn btn-default">
                                     @messages("signup.title")
                                 </a>
                                 <button type="submit" class="btn btn-primary">@messages("login.title")</button>

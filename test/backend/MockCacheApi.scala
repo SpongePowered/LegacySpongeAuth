@@ -1,3 +1,5 @@
+package backend
+
 import javax.inject.{Inject, Singleton}
 
 import play.api.cache.CacheApi
