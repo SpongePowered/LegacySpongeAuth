@@ -10,7 +10,7 @@ import sso.SSOConfig
 /**
   * Helper class for [[Email]] composition.
   */
-class Emails @Inject()(implicit override val messagesApi: MessagesApi, config: SSOConfig) extends I18nSupport {
+final class Emails @Inject()(implicit override val messagesApi: MessagesApi, config: SSOConfig) extends I18nSupport {
 
   /**
     * Composes a new confirmation email.

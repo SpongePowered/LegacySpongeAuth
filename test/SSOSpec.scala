@@ -6,7 +6,7 @@ import play.api.test.{FakeRequest, WithServer}
 import play.api.test.Helpers._
 
 @RunWith(classOf[JUnitRunner])
-class SSOSpec extends Specification with ApplicationHelpers {
+final class SSOSpec extends Specification with ApplicationHelpers {
 
   this.users.removeAll()
 
@@ -18,6 +18,39 @@ class SSOSpec extends Specification with ApplicationHelpers {
         status(showSignUp) must equalTo(OK)
         assertNotAuthenticated(showSignUp)
         getSSOToken(showSignUp).isEmpty must equalTo(true)
+      }
+
+      "reject signatures that require verification" in new WithServer {
+        // Send SSO request
+        val ssoQuery = SSOSpec.this.sso.getQuery(verify = true)
+        val request = FakeRequest(GET, "/signup" + ssoQuery)
+        val showSignUp = route(SSOSpec.this.app, request).get
+        status(showSignUp) must equalTo(OK)
+        assertNotAuthenticated(showSignUp)
+
+        val ssoToken = getSSOToken(showSignUp)
+        ssoToken.isDefined must equalTo(true)
+
+        // Create account
+        val signUp = doSignUp(FakeRequest(POST, "/signup"))
+        val confirmation = assertCreated(signUp)
+
+        // Confirm account
+        Thread.sleep(1000)
+        val token = SSOSpec.this.mailer.scrapeToken(confirmation.email)
+        token.isDefined must equalTo(true)
+
+        val confirmRequest = FakeRequest(GET, "/email/confirm/" + token.get).withSSO(ssoToken.get)
+        val confirmCall = route(SSOSpec.this.app, confirmRequest).get
+        status(confirmCall) must equalTo(SEE_OTHER)
+        assertAuthenticated(confirmCall)
+
+        // Ensure that we are redirected from home
+        val homeRedirect = redirectLocation(confirmCall).get
+        val home = route(SSOSpec.this.app, FakeRequest(GET, homeRedirect)).get
+        status(home) must equalTo(SEE_OTHER)
+
+        SSOSpec.this.users.removeAll()
       }
 
       "complete sso" in new WithServer {
@@ -49,6 +82,36 @@ class SSOSpec extends Specification with ApplicationHelpers {
     }
 
     "via log in" in {
+      "reject invalid signatures" in {
+        val request = FakeRequest(GET, "/login" + this.badSSOQuery)
+        val showLogIn = route(this.app, request).get
+        status(showLogIn) must equalTo(OK)
+        assertNotAuthenticated(showLogIn)
+        getSSOToken(showLogIn).isEmpty must equalTo(true)
+      }
+
+      "reject signatures that require verification" in new WithServer {
+        // Send sso request
+        val ssoQuery = SSOSpec.this.sso.getQuery(verify = true)
+        val request = FakeRequest(GET, "/login" + ssoQuery)
+        val showLogIn = route(SSOSpec.this.app, request).get
+        status(showLogIn) must equalTo(OK)
+        assertNotAuthenticated(showLogIn)
+
+        val ssoToken = getSSOToken(showLogIn)
+        ssoToken.isDefined must equalTo(true)
+
+        // Log in
+        val logIn = doLogIn(FakeRequest(POST, "/login"), FakeUser.username, FakeUser.password)
+        assertAuthenticated(logIn)
+        status(logIn) must equalTo(SEE_OTHER)
+
+        // Ensure we are redirected from home
+        val homeRedirect = redirectLocation(logIn).get
+        val home = route(SSOSpec.this.app, FakeRequest(GET, homeRedirect)).get
+        status(home) must equalTo(SEE_OTHER)
+      }
+
       "complete sso" in new WithServer {
         val showLogIn = route(SSOSpec.this.app, FakeRequest(GET, "/login" + SSOSpec.this.ssoQuery)).get
         status(showLogIn) must equalTo(OK)
@@ -78,7 +141,7 @@ class SSOSpec extends Specification with ApplicationHelpers {
         status(verify) must equalTo(BAD_REQUEST)
       }
 
-      "reject invalid sso signatures" in {
+      "reject invalid signatures" in {
         val request = FakeRequest(GET, "/verify" + this.badSSOQuery)
         val showSignUp = route(this.app, request).get
         status(showSignUp) must equalTo(BAD_REQUEST)

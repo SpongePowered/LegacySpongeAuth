@@ -1,23 +1,16 @@
-import backend.{FakeUser, MockCacheApi, MockMailer, MockUserDBO}
-import db.UserDBO
-import mail.Mailer
+import backend.{FakeUser, MockUserDBO}
 import org.apache.commons.lang3.RandomStringUtils.{randomAlphanumeric => randomString}
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.Mode
-import play.api.cache.CacheApi
-import play.api.inject._
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Cookie
+import play.api.mvc.{Cookie, Security}
 import play.api.test.Helpers._
 import play.api.test._
-import sso.SSOConfig
 
 @RunWith(classOf[JUnitRunner])
-class ApplicationSpec extends Specification with ApplicationHelpers {
+final class ApplicationSpec extends Specification with ApplicationHelpers {
 
-  import this.users.getSession
+  import users.getSession
 
   "Application" should {
     var authToken: Cookie = null
@@ -27,6 +20,20 @@ class ApplicationSpec extends Specification with ApplicationHelpers {
         val home = route(this.app, FakeRequest(GET, "/")).get
         status(home) must equalTo(SEE_OTHER)
         assertNotAuthenticated(home)
+      }
+
+      "instruct email confirmation if needed" in new WithServer {
+        val signUp = doSignUp(FakeRequest(POST, "/signup"))
+        status(signUp) must equalTo(SEE_OTHER)
+        val confirmation = assertCreated(signUp)
+
+        val user = session(signUp).get(Security.username)
+        user.isDefined must equalTo(true)
+
+        val redirect = redirectLocation(signUp).get
+        val home = route(ApplicationSpec.this.app, FakeRequest(GET, redirect).withUser(user.get)).get
+        status(home) must equalTo(OK)
+        contentAsString(home) must contain(ApplicationSpec.this.messages("signup.confirmEmail", confirmation.email))
       }
 
       "delete expired sessions" in new WithServer {

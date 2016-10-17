@@ -5,6 +5,7 @@ import models.EmailConfirmation
 import org.specs2.mutable._
 import play.api.Mode
 import play.api.cache.CacheApi
+import play.api.i18n.MessagesApi
 import play.api.inject._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Cookie, Security}
@@ -30,6 +31,7 @@ trait ApplicationHelpers extends Specification {
   val injector = this.app.injector
   val config = this.injector.instanceOf[SSOConfig]
   val cache = this.injector.instanceOf[CacheApi]
+  val messages = this.injector.instanceOf[MessagesApi]
 
   this.sso.secret = this.config.sso.getString("secret").get
 

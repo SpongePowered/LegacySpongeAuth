@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
 
 //noinspection ScalaDeprecation
 @Singleton
-class MockCacheApi @Inject() extends CacheApi {
+final class MockCacheApi @Inject() extends CacheApi {
 
   var data: Map[String, Any] = Map.empty
 

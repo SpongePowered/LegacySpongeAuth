@@ -179,7 +179,7 @@ object SingleSignOn {
     request.cookies.get("_sso").flatMap { token =>
       val so = cache.get[SingleSignOn](token.value)
       if (so.isDefined)
-        Logger.info("Retrieved SSO reequest from cache of value: " + so.get)
+        Logger.info("Retrieved SSO request from cache of value: " + so.get)
       so
     }
   }

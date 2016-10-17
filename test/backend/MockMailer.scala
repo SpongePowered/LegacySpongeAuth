@@ -8,7 +8,7 @@ import mail.{Email, Mailer}
 import scala.concurrent.duration._
 
 @Singleton
-class MockMailer @Inject()(actorSystem: ActorSystem) extends Mailer {
+final class MockMailer @Inject()(actorSystem: ActorSystem) extends Mailer {
 
   override val username = null
   override val email = null

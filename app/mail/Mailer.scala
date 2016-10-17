@@ -99,7 +99,7 @@ trait Mailer extends Runnable {
 }
 
 @Singleton
-class MailerImpl @Inject()(config: SSOConfig, actorSystem: ActorSystem) extends Mailer {
+final class MailerImpl @Inject()(config: SSOConfig, actorSystem: ActorSystem) extends Mailer {
 
   private val conf = this.config.mail
 

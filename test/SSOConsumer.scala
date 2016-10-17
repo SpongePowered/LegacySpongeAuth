@@ -38,12 +38,16 @@ class SSOConsumer {
     *
     * @return URL to SSO
     */
-  def getQuery(badSig: Boolean = false): String = {
+  def getQuery(badSig: Boolean = false, verify: Boolean = false): String = {
     val payload = "return_sso_url=" + ConsumeSSO + "&nonce=" + nonce
     val encoded = new String(Base64.getEncoder.encode(payload.getBytes(this.CharEncoding)))
     val urlEncoded = URLEncoder.encode(encoded, this.CharEncoding)
-    val hmac = if (!badSig) hmac_sha256(encoded.getBytes(this.CharEncoding)) else "invalid_signature"
-    "?sso=" + urlEncoded + "&sig=" + hmac
+    var signature = hmac_sha256(encoded.getBytes(this.CharEncoding))
+    if (verify)
+      signature += "&verify=true"
+    if (badSig)
+      signature = "invalid_signature"
+    "?sso=" + urlEncoded + "&sig=" + signature
   }
 
   /**
