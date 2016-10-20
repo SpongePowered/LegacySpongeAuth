@@ -3,6 +3,7 @@ package controllers
 import javax.inject.Inject
 
 import com.google.common.base.Preconditions._
+import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SSOForms
 import mail.{Emails, Mailer}
@@ -10,7 +11,6 @@ import play.api.cache.CacheApi
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import security.CryptoUtils._
 import security.sso.{SSOConfig, SingleSignOn}
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
@@ -21,18 +21,17 @@ import scala.concurrent.duration._
   * Main entry point for Sponge SSO.
   */
 final class Application @Inject()(override val messagesApi: MessagesApi,
-                                  val forms: SSOForms,
-                                  val mailer: Mailer,
-                                  val emails: Emails,
-                                  val totp: TotpAuth,
-                                  val qrRenderer: QrCodeRenderer,
-                                  implicit val users: UserDBO,
+                                  forms: SSOForms,
+                                  mailer: Mailer,
+                                  emails: Emails,
+                                  totp: TotpAuth,
+                                  qrRenderer: QrCodeRenderer,
+                                  implicit override val users: UserDBO,
                                   implicit val cache: CacheApi,
-                                  implicit val config: SSOConfig) extends Controller with I18nSupport with Secured {
+                                  implicit val config: SSOConfig) extends Controller with I18nSupport with Actions {
 
   private val ssoSecret = this.config.sso.getString("secret").get
   private val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
-  private val encryptionSecret = this.config.play.getString("crypto.secret").get
 
   /**
     * Displays the sign up form. If there is an incoming SSO payload it will
@@ -50,7 +49,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // If the user is already logged in, redirect home
-    this.users.current.foreach(user => result = Redirect(routes.Application.showHome()))
+    this.users.current.foreach(user => result = Redirect(Application.showHome()))
     // Return result with SSO request reference (if any)
     SingleSignOn.addToResult(result, signOn)
   }
@@ -76,16 +75,16 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def signUp() = NotAuthenticated { implicit request =>
     this.forms.SignUp.bindFromRequest.fold(
       hasErrors =>
-        FormError(routes.Application.showSignUp(None, None), hasErrors),
+        FormError(Application.showSignUp(None, None), hasErrors),
       formData => {
         // Create the user and send confirmation email
         val confirmation = this.users.createUser(formData)
         val user = confirmation.user
         this.mailer.push(this.emails.confirmation(confirmation))
         if (formData.setup2fa)
-          Redirect(routes.Application.show2faSetup()).remembering(user)
+          Redirect(TwoFactorAuth.showSetup()).remembering(user)
         else
-          Redirect(routes.Application.showHome()).authenticatedAs(user)
+          Redirect(Application.showHome()).authenticatedAs(user)
       }
     )
   }
@@ -106,7 +105,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // If the user is already logged in, redirect home
-    this.users.current.foreach(user => result = Redirect(routes.Application.showHome()))
+    this.users.current.foreach(user => result = Redirect(Application.showHome()))
     // Return result with SSO reference (if any)
     SingleSignOn.addToResult(result, signOn)
   }
@@ -122,7 +121,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def logIn() = NotAuthenticated { implicit request =>
     // Process form data
-    val errorRedirect = routes.Application.showLogIn(None, None)
+    val errorRedirect = Application.showLogIn(None, None)
     this.forms.LogIn.bindFromRequest().fold(
       hasErrors =>
         FormError(errorRedirect, hasErrors),
@@ -137,62 +136,14 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
             user.totpSecret match {
               case None =>
                 // Nope
-                Redirect(routes.Application.showHome()).authenticatedAs(user)
+                Redirect(Application.showHome()).authenticatedAs(user)
               case Some(encSecret) =>
                 // Yup, have them verify
-                Ok
+                Redirect(TwoFactorAuth.showVerification()).remembering(user)
             }
         }
       }
     )
-  }
-
-  /**
-    * Generates a new TOTP secret for the authenticated user and displays the
-    * setup form for 2-factor authentication. The user must not already have
-    * 2FA enabled.
-    *
-    * @return Setup for for 2FA
-    */
-  def show2faSetup() = WithSession { implicit request =>
-    val user = request.userSession.user
-    user.totpSecret match {
-      case None =>
-        val secret = decrypt(this.users.enableTotp(user).totpSecret.get, this.encryptionSecret)
-        val uri = this.totp.generateUri(user.username, secret)
-
-        val totpConf = this.config.totp
-        val qrWidth = totpConf.getInt("qr.width").get
-        val qrHeight = totpConf.getInt("qr.height").get
-        val qrCode = this.qrRenderer.render(uri, qrWidth, qrHeight)
-
-        Ok(views.html.tfa.setup(qrCode))
-      case Some(secret) =>
-        // TOTP already enabled
-        BadRequest
-    }
-  }
-
-  /**
-    * Verifies a submitted TOTP and marks the current session as authenticated
-    * if successful.
-    *
-    * @return BadRequest if user has no TOTP secret
-    */
-  def verifyTotp() = WithSession { implicit request =>
-    val session = request.userSession
-    val user = session.user
-    user.totpSecret match {
-      case None =>
-        BadRequest
-      case Some(encSecret) =>
-        val code = this.forms.VerifyTotp.bindFromRequest().get
-        if (this.users.verifyTotp(user, code)) {
-          this.users.setSessionAuthenticated(session)
-          Redirect(routes.Application.showHome())
-        } else
-          BadRequest
-    }
   }
 
   /**
@@ -204,7 +155,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     this.users.current match {
       case None =>
         // Redirect to log in page
-        Redirect(routes.Application.showLogIn(None, None))
+        Redirect(Application.showLogIn(None, None))
       case Some(user) =>
         // User found
         if (user.isEmailConfirmed) {
@@ -218,7 +169,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
               if (sso.ignoreSession) {
                 // We've been told to ignore session data, the SSO redirect
                 // must go through verify()
-                Redirect(routes.Application.showVerification(None, None))
+                Redirect(Application.showVerification(None, None))
               } else {
                 // Complete SSO request
                 Ok(views.html.home(user, Some(sso.getRedirect(user)))).discardingCookies(DiscardingCookie("_sso"))
@@ -249,7 +200,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def confirmEmail(token: String) = Action { implicit request =>
     this.users.confirmEmail(token)
-    Redirect(routes.Application.showHome())
+    Redirect(Application.showHome())
   }
 
   /**
@@ -283,7 +234,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     // Clear the current session, delete auth cookie, and delete the
     // server-side Session
     request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
-    Redirect(routes.Application.showLogIn(None, None)).withNewSession.discardingCookies(DiscardingCookie("_token"))
+    Redirect(Application.showLogIn(None, None)).withNewSession.discardingCookies(DiscardingCookie("_token"))
   }
 
   /**
@@ -322,7 +273,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           hasErrors => {
             // User error
             val firstError = hasErrors.errors.head
-            val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
+            val call = Application.showVerification(Some(so.payload), Some(so.sig))
             Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
           },
           formData => {
@@ -330,7 +281,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
             this.users.verify(formData.username, formData.password) match {
               case None =>
                 // Verification failed
-                val call = routes.Application.showVerification(Some(so.payload), Some(so.sig))
+                val call = Application.showVerification(Some(so.payload), Some(so.sig))
                 Redirect(call).flashing("error" -> "error.verify.user")
               case Some(user) =>
                 // Redirect directly back to SSO origin
@@ -349,15 +300,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def reset() = Action {
     this.config.checkDebug()
     this.users.removeAll()
-    Redirect(routes.Application.showSignUp(None, None))
-  }
-
-  private def FormError(call: Call, form: Form[_]) = {
-    checkNotNull(call, "null call", "")
-    checkNotNull(form, "null form", "")
-    checkArgument(form.errors.nonEmpty, "no errors", "")
-    val firstError = form.errors.head
-    Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
+    Redirect(Application.showSignUp(None, None))
   }
 
 }

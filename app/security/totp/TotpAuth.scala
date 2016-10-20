@@ -84,6 +84,9 @@ trait TotpAuth {
     */
   val digits: Int = 6
 
+  /**
+    * The name of the party that issues the secret keys.
+    */
   val issuer: String
 
   /**

@@ -166,6 +166,18 @@ trait UserDBO {
   }
 
   /**
+    * Marks the user as having confirmed their given TOTP secret.
+    *
+    * @param user User to set TOTP confirmed status of
+    */
+  def setTotpConfirmed(user: User) = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    val query = for { u <- this.users if u.id === user.id.get } yield u.isTotpConfirmed
+    await(db.run(query.update(true)))
+  }
+
+  /**
     * Creates a new Cookie to be given to the client to identify their session.
     *
     * @param session  Session to create cookie for
@@ -184,20 +196,25 @@ trait UserDBO {
     * @param user User to enable TOTP for
     * @return     Updated User
     */
-  def enableTotp(user: User): User = {
+  def generateTotpSecret(user: User): User = {
     checkNotNull(user, "null user", "")
     checkArgument(user.id.isDefined, "undefined user", "")
-    user.totpSecret match {
-      case None =>
-        val query = for { u <- this.users if u.id === user.id.get } yield u.totpSecret
-        val secret = encrypt(this.totp.generateSecret(), this.encryptionSecret)
-        await(db.run(query.update(secret)))
-        get(user.id.get).get
-      case Some(secret) =>
-        throw new Exception("user already has TOTP enabled")
-    }
+    if (user.isTotpConfirmed)
+      throw new Exception("user already has TOTP enabled")
+    val query = for { u <- this.users if u.id === user.id.get } yield u.totpSecret
+    val secret = encrypt(this.totp.generateSecret(), this.encryptionSecret)
+    await(db.run(query.update(secret)))
+    get(user.id.get).get
   }
 
+  /**
+    * Verifies that the specified TOTP is valid for the specified [[User]] at
+    * the current time.
+    *
+    * @param user User to check for
+    * @param code TOTP code to check
+    * @return     True if verified
+    */
   def verifyTotp(user: User, code: Int): Boolean = {
     checkNotNull(user, "null user", "")
     checkArgument(user.id.isDefined, "undefined user", "")
@@ -232,6 +249,14 @@ trait UserDBO {
     */
   def getSession(token: String): Option[DbSession] = getTokenExpirable[DbSession](this.sessions, token)
 
+  /**
+    * Retrieves the session for the specified request if it exists and has not
+    * expired. If expired, the session will be deleted immediately and None
+    * will be returned.
+    *
+    * @param request  Incoming request
+    * @return         Session of request
+    */
   def getSession(implicit request: Request[_]): Option[DbSession] = {
     checkNotNull(request, "null request", "")
     request.cookies.get("_token").flatMap(token => getSession(token.value))

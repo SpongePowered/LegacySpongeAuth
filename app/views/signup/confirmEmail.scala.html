@@ -1,4 +1,5 @@
 @import security.sso.SSOConfig
+@import controllers.routes.Application
 @(emailConfirm: EmailConfirmation)(implicit messages: Messages, config: SSOConfig, request: Request[_])
 
 @bootstrap.layout(messages("signup.title")) {
@@ -25,7 +26,7 @@
                         <p>@Html(messages("signup.confirmEmail", emailConfirm.email))</p>
 
                         <div class="pull-right">
-                            <a href="@routes.Application.logOut()" class="btn btn-default">Log out</a>
+                            <a href="@Application.logOut()" class="btn btn-default">Log out</a>
                             <button class="btn btn-resend btn-primary">
                                 <i class="fa fa-spinner fa-spin" style="display: none;"></i>
                                 Resend

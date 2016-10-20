@@ -7,10 +7,24 @@ import javax.inject.Inject
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
+/**
+  * Helper class for rendering string content as a QR Code.
+  */
 trait QrCodeRenderer {
 
   val writer = new QRCodeWriter
 
+  /**
+    * Renders the specified content string as an image with the specified
+    * width, height and background color. If no backrgound color is specified,
+    * white will be used.
+    *
+    * @param content          Content to encode
+    * @param width            Image width
+    * @param height           Image height
+    * @param backgroundColor  QR background
+    * @return                 A new [[RenderedQrCode]]
+    */
   def render(content: String, width: Int, height: Int, backgroundColor: Color = Color.WHITE) = {
     val matrix = this.writer.encode(content, BarcodeFormat.QR_CODE, width, height)
     val mWidth = matrix.getWidth

@@ -10,10 +10,7 @@
 }
 
 .form-totp {
-  text-align: center;
-  margin: 0 auto;
-  width: 300px;
-  input { margin: 0 auto; }
-  input, button { width: 100px; }
+  p { max-width: 80%; }
   i { color: gray; }
+  input { margin-bottom: 10px; }
 }

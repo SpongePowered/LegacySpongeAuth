@@ -1,7 +1,7 @@
 @import security.sso.SSOConfig
 @import security.totp.qr.RenderedQrCode
-@import views.html.helper.form
-@(qr: RenderedQrCode)(implicit messages: Messages, request: Request[_], config: SSOConfig)
+@import controllers.routes.TwoFactorAuth
+@(qr: RenderedQrCode)(implicit messages: Messages, request: Request[_], config: SSOConfig, flash: Flash)
 
 @bootstrap.layout(messages("2fa.setup.title")) {
 
@@ -12,16 +12,13 @@
                     <div class="panel-heading">
                         <h4 class="panel-title">@messages("2fa.setup.title")</h4>
                     </div>
+
                     <div class="panel-body">
+                        @utils.alert("error")
+
                         <p>@messages("2fa.setup.info")</p>
                         <img class="qr-totp" src="@qr.toDataUri()" />
-
-                        @form(action = routes.Application.verifyTotp(), 'class -> "form-totp") {
-                            <label for="totp">@messages("2fa.code.title")</label>
-                            <input type="text" name="totp" class="form-control" />
-                            <button class="btn btn-primary" type="submit">@messages("2fa.code.submit")</button>
-                            <p><i>@messages("2fa.code.title")</i></p>
-                        }
+                        @tfa.form(TwoFactorAuth.confirmTotp(), "2fa.code.info")
                     </div>
                 </div>
             </div>

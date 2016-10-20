@@ -23,6 +23,8 @@ error.unique.mcUsername     =   An account with that Minecraft username already 
 error.unique.ircNick        =   An account with that IRC nick already exists.
 error.unique.ghUsername     =   An account with that GitHub username already exists.
 error.malformed.username    =   Username must not contain spaces.
+error.number.totp           =   The entered code must be a six-digit integer.
+error.digits.totp           =   The entered code must be a six-digit integer.
 
 
 signup.title            =   Sign up
@@ -55,7 +57,11 @@ email.confirm.subject = Confirm your email with Sponge
 email.signature = Best regards,<br/>SpongePowered
 
 2fa.setup.title = Setup two-factor authentication
-2fa.setup.info = Secure your account be setting up two-factor authentication on your account with a mobile app such as Google Authenticator. Scan the QR Code below to get started.
+2fa.setup.info = Secure your account by setting up two-factor authentication on your account with a mobile app such as Google Authenticator. Scan the QR Code below to get started.
+2fa.verify.info = Enter the generated code from your previously set up mobile app.
+2fa.verify.title = Two-Factor Authentication
+2fa.verify.lost = Lost your phone? <a href="#">Contact support</a> to regain access to your account.
 2fa.code.title = Enter your generated code
 2fa.code.submit = Verify
 2fa.code.info = Having trouble? <a href="#">Enter your code manually instead.</a>
+2fa.code.invalid = The code you entered was incorrect. Please try again.

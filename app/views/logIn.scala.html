@@ -1,5 +1,6 @@
 @import security.sso.SSOConfig
 @import views.html.helper.form
+@import controllers.routes.Application
 @()(implicit config: SSOConfig, messages: Messages, flash: Flash, request: Request[_])
 
 @bootstrap.layout(messages("login.title")) {
@@ -13,7 +14,7 @@
                     </div>
 
                     <div class="panel-body">
-                        @form(action = routes.Application.logIn()) {
+                        @form(action = Application.logIn()) {
                             @utils.alert("error")
 
                             @utils.inputField("username", "signup.username", info = false) {
@@ -25,7 +26,7 @@
                             }
 
                             <div class="pull-right">
-                                <a href="@routes.Application.showSignUp(None, None)" class="btn btn-default">
+                                <a href="@Application.showSignUp(None, None)" class="btn btn-default">
                                     @messages("signup.title")
                                 </a>
                                 <button type="submit" class="btn btn-primary">@messages("login.title")</button>

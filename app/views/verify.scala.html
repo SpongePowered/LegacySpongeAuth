@@ -1,5 +1,6 @@
 @import security.sso.SSOConfig
 @import views.html.helper.form
+@import controllers.routes.Application
 @(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
         request: Request[_])
 
@@ -14,7 +15,7 @@
                     </div>
 
                     <div class="panel-body">
-                        @form(action = routes.Application.verify()) {
+                        @form(action = Application.verify()) {
                             @utils.alert("error")
 
                             @utils.inputField("username", "signup.username", info = false) {

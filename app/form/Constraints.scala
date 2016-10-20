@@ -30,6 +30,8 @@ trait Constraints {
     maxLength = getInt("password.maxLen").get
   )
 
+  val totp = number verifying(_.toString.length == this.config.totp.getInt("digits").get)
+
   /**
     * A wrapper for a String [[Mapping]].
     *

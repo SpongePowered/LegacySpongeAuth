@@ -27,7 +27,8 @@ case class User(id: Option[Int] = None,
                 mcUsername: Option[String] = None,
                 ircNick: Option[String] = None,
                 ghUsername: Option[String] = None,
-                totpSecret: Option[String] = None) {
+                totpSecret: Option[String] = None,
+                isTotpConfirmed: Boolean = false) {
 
   def this(email: String, username: String, password: String, mcUsername: String, ircNick: String,
            ghUsername: String) = {

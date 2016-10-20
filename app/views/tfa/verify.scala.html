@@ -1,5 +1,6 @@
 @import security.sso.SSOConfig
-@()(implicit messages: Messages, config: SSOConfig, request: Request[_])
+@import controllers.routes.TwoFactorAuth
+@()(implicit messages: Messages, config: SSOConfig, request: Request[_], flash: Flash)
 
 @bootstrap.layout(messages("2fa.verify.title")) {
 
@@ -12,7 +13,9 @@
                     </div>
 
                     <div class="panel-body">
-
+                        @utils.alert("error")
+                        <p>@messages("2fa.verify.info")</p>
+                        @tfa.form(TwoFactorAuth.verifyTotp(), "2fa.verify.lost")
                     </div>
                 </div>
             </div>

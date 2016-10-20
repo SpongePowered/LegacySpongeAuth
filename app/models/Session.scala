@@ -8,11 +8,12 @@ import db.schema.SessionTable
 /**
   * Represents a [[User]] session associated with some device.
   *
-  * @param id         Unique ID
-  * @param createdAt  Timestamp of creation
-  * @param expiration Timestamp of when this session should no longer be considered valid
-  * @param username   Username of user session is associated with
-  * @param token      Unique token to be given to the client as a cookie for session identification
+  * @param id               Unique ID
+  * @param createdAt        Timestamp of creation
+  * @param expiration       Timestamp of when this session should no longer be considered valid
+  * @param username         Username of user session is associated with
+  * @param token            Unique token to be given to the client as a cookie for session identification
+  * @param isAuthenticated  True if this session should be considered as authenticated
   */
 case class Session(id: Option[Int] = None,
                    createdAt: Timestamp,

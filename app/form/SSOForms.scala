@@ -42,6 +42,8 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     * The form submitted to verify a user with 2FA using a Time-based one
     * time password.
     */
-  lazy val VerifyTotp = Form(single("totp" -> number))
+  lazy val VerifyTotp = Form(single(
+    "totp" -> number.verifying("error.digits", _.toString.length == this.config.totp.getInt("digits").get)
+  ))
 
 }

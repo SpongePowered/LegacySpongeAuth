@@ -13,8 +13,10 @@ POST    /verify                     @controllers.Application.verify()
 POST    /email/confirm/resend       @controllers.Application.resendConfirmationEmail()
 GET     /email/confirm/:token       @controllers.Application.confirmEmail(token)
 
-GET     /2fa/setup                  @controllers.Application.show2faSetup()
-POST    /2fa/verify                 @controllers.Application.verifyTotp()
+GET     /2fa/setup                  @controllers.TwoFactorAuth.showSetup()
+POST    /2fa/setup                  @controllers.TwoFactorAuth.confirmTotp()
+GET     /2fa/verify                 @controllers.TwoFactorAuth.showVerification()
+POST    /2fa/verify                 @controllers.TwoFactorAuth.verifyTotp()
 
 GET     /reset                      @controllers.Application.reset()
 

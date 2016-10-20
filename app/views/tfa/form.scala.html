@@ -1,0 +1,8 @@
+@(call: Call, message: String)(implicit messages: Messages)
+
+@helper.form(action = call, 'class -> "form-totp") {
+    <label for="totp">@messages("2fa.code.title")</label>
+    <input type="text" name="totp" class="form-control" placeholder="123456" required />
+    <button class="pull-right btn btn-primary" type="submit">@messages("2fa.code.submit")</button>
+    <p class="pull-left"><i>@Html(messages(message))</i></p>
+}

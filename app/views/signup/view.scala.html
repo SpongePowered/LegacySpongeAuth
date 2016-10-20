@@ -1,5 +1,6 @@
 @import security.sso.SSOConfig
 @import views.html.helper.form
+@import controllers.routes.Application
 @(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
         request: Request[_])
 
@@ -15,7 +16,7 @@
                     <div class="panel-body">
                         @utils.alert("error")
 
-                        @form(action = routes.Application.signUp()) {
+                        @form(action = Application.signUp()) {
                             @utils.inputField("email", "signup.email") {
                                 <input type="email" name="email" class="form-control" required />
                             }
@@ -48,7 +49,7 @@
                             </div>
 
                             <div class="pull-right">
-                                <a href="@routes.Application.showLogIn(sso, sig)" class="btn btn-default">
+                                <a href="@Application.showLogIn(sso, sig)" class="btn btn-default">
                                     @messages("login.title")
                                 </a>
                                 <button id="btn-sign-up" type="submit" class="btn btn-primary">

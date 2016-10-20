@@ -17,8 +17,9 @@ final class UserTable(tag: Tag) extends Table[User](tag, "users") {
   def ircNick           = column[String]("irc_nick")
   def ghUsername        = column[String]("gh_username")
   def totpSecret        = column[String]("totp_secret")
+  def isTotpConfirmed   = column[Boolean]("is_totp_confirmed")
 
   override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, password, mcUsername.?, ircNick.?,
-                    ghUsername.?, totpSecret.?) <> (User.tupled, User.unapply)
+                    ghUsername.?, totpSecret.?, isTotpConfirmed) <> (User.tupled, User.unapply)
 
 }

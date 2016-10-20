@@ -1,8 +1,9 @@
 @import security.sso.SSOConfig
+@import controllers.routes.Application
 @(emailConfirm: EmailConfirmation)(implicit messages: Messages, config: SSOConfig, request: Request[_])
 
 @confirmUrl = @{
-    routes.Application.confirmEmail(emailConfirm.token)
+    Application.confirmEmail(emailConfirm.token)
 }
 
 @bootstrap.layout(messages("email.confirm.title"), header = false, footer = false) {
