@@ -4,16 +4,19 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 import javax.inject.Inject
 
+import com.google.common.base.Preconditions._
 import db.schema.{EmailConfirmationTable, SessionTable, UserTable}
 import form.SignUpForm
 import models.{EmailConfirmation, TokenExpirable, User}
 import org.mindrot.jbcrypt.BCrypt._
 import play.api.db.slick.DatabaseConfigProvider
-import play.api.mvc.{Cookie, Request, Security}
+import play.api.mvc.{Cookie, Request}
+import security.CryptoUtils._
+import security.sso.SSOConfig
+import security.totp.TotpAuth
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 import slick.driver.PostgresDriver.api._
-import security.sso.SSOConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -38,6 +41,10 @@ trait UserDBO {
   val maxSessionAge: Int
   /** The maximum age of an [[EmailConfirmation]] */
   val maxEmailConfirmationAge: Long
+  /** [[TotpAuth]] instance */
+  val totp: TotpAuth
+  /** Secret string used for two-way encryption */
+  val encryptionSecret: String
 
   implicit val self = this
 
@@ -55,6 +62,7 @@ trait UserDBO {
     * @return         New user
     */
   def createUser(formData: SignUpForm): EmailConfirmation = {
+    checkNotNull(formData, "null form data", "")
     // Create user
     val pwdHash = hashpw(formData.password, gensalt(this.passwordSaltLogRounds))
     var user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(theTime))
@@ -65,17 +73,17 @@ trait UserDBO {
 
   /**
     * Deletes the pending [[EmailConfirmation]] of the specified token if it
-    * exists and returns a new [[models.Session]].
+    * exists and marks the user as having their email confirmed.
     *
     * @param token  Token to lookup
     * @return       New session if email confirmed
     */
-  def confirmEmail(token: String): Option[DbSession] = {
+  def confirmEmail(token: String) = {
+    checkNotNull(token, "null token", "")
     getTokenExpirable[EmailConfirmation](this.emailConfirms, token).map { confirmation =>
       db.run(this.emailConfirms.filter(_.token === token).delete)
       val updateUserQuery = for { u <- this.users if u.email === confirmation.email } yield u.isEmailConfirmed
       await(db.run(updateUserQuery.update(true)))
-      createSession(confirmation.user)
     }
   }
 
@@ -88,6 +96,7 @@ trait UserDBO {
     * @return       EmailConfirmation if found
     */
   def getEmailConfirmation(email: String): Option[EmailConfirmation] = {
+    checkNotNull(email, "null email", "")
     await(db.run(this.emailConfirms.filter(_.email === email).result).map(_.headOption)).flatMap { confirmation =>
       if (confirmation.hasExpired) {
         await(db.run(this.emailConfirms.filter(_.id === confirmation.id).delete))
@@ -104,6 +113,8 @@ trait UserDBO {
     * @return     New EmailConfirmation
     */
   def createEmailConfirmation(user: User): EmailConfirmation = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
     val emailToken = UUID.randomUUID().toString.replace("-", "")
     val confirmExpiration = new Timestamp(new Date().getTime + this.maxEmailConfirmationAge)
     val emailConfirm = EmailConfirmation(None, theTime, confirmExpiration, user.email, emailToken)
@@ -116,7 +127,10 @@ trait UserDBO {
     *
     * @param email Email to delete confirmations for
     */
-  def deleteEmailConfirmation(email: String) = await(db.run(this.emailConfirms.filter(_.email === email).delete))
+  def deleteEmailConfirmation(email: String) = {
+    checkNotNull(email, "null email", "")
+    await(db.run(this.emailConfirms.filter(_.email === email).delete))
+  }
 
   /**
     * Creates a new [[models.Session]] for the specified [[User]].
@@ -124,12 +138,31 @@ trait UserDBO {
     * @param user User to create session for
     * @return     New session
     */
-  def createSession(user: User): DbSession = {
+  def createSession(user: User, authenticated: Boolean = false): DbSession = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
     val token = UUID.randomUUID().toString
     val expiration = new Timestamp(new Date().getTime + maxSessionAge * 1000L)
-    var session = new DbSession(theTime, expiration, user.username, token)
+    var session = DbSession(
+      createdAt = theTime,
+      expiration = expiration,
+      username = user.username,
+      token = token,
+      isAuthenticated = authenticated)
     val sessionInsert = this.sessions returning this.sessions += session
     await(db.run(sessionInsert))
+  }
+
+  /**
+    * Marks the specified session as authenticated.
+    *
+    * @param session Session to mark as authenticated
+    */
+  def setSessionAuthenticated(session: DbSession) = {
+    checkNotNull(session, "null session", "")
+    checkArgument(session.id.isDefined, "undefined session", "")
+    val query = for { s <- this.sessions if s.id === session.id.get } yield s.isAuthenticated
+    await(db.run(query.update(true)))
   }
 
   /**
@@ -138,7 +171,40 @@ trait UserDBO {
     * @param session  Session to create cookie for
     * @return         Session cookie
     */
-  def createSessionCookie(session: DbSession) = Cookie("_token", session.token, Some(this.maxSessionAge))
+  def createSessionCookie(session: DbSession) = {
+    checkNotNull(session, "null session", "")
+    checkArgument(session.id.isDefined, "undefined session", "")
+    Cookie("_token", session.token, Some(this.maxSessionAge))
+  }
+
+  /**
+    * Enables and generates a new secret for the specified [[User]]. If TOTP is
+    * already enabled for this User an exception will be thrown.
+    *
+    * @param user User to enable TOTP for
+    * @return     Updated User
+    */
+  def enableTotp(user: User): User = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    user.totpSecret match {
+      case None =>
+        val query = for { u <- this.users if u.id === user.id.get } yield u.totpSecret
+        val secret = encrypt(this.totp.generateSecret(), this.encryptionSecret)
+        await(db.run(query.update(secret)))
+        get(user.id.get).get
+      case Some(secret) =>
+        throw new Exception("user already has TOTP enabled")
+    }
+  }
+
+  def verifyTotp(user: User, code: Int): Boolean = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    checkArgument(user.totpSecret.isDefined, "totp disabled for user", "")
+    val secret = decrypt(user.totpSecret.get, this.encryptionSecret)
+    this.totp.checkCode(secret, code)
+  }
 
   /**
     * Returns the currently authenticated [[User]], if any.
@@ -147,13 +213,12 @@ trait UserDBO {
     * @return         Authenticated User if found, None otherwise
     */
   def current(implicit request: Request[_]): Option[User] = {
-    val username = request.session.get(Security.username)
-    if (username.isDefined)
-      withName(username.get)
-    else {
-      request.cookies.get("_token").flatMap { token =>
-        getSession(token.value).flatMap(session => withName(session.username))
-      }
+    checkNotNull(request, "null request", "")
+    getSession.flatMap { session =>
+      if (session.isAuthenticated)
+        withName(session.username)
+      else
+        None
     }
   }
 
@@ -167,7 +232,14 @@ trait UserDBO {
     */
   def getSession(token: String): Option[DbSession] = getTokenExpirable[DbSession](this.sessions, token)
 
+  def getSession(implicit request: Request[_]): Option[DbSession] = {
+    checkNotNull(request, "null request", "")
+    request.cookies.get("_token").flatMap(token => getSession(token.value))
+  }
+
   private def getTokenExpirable[M <: TokenExpirable](query: TableQuery[M#T], token: String): Option[M] = {
+    checkNotNull(query, "null query", "")
+    checkNotNull(token, "null token", "")
     await(db.run(query.filter(_.token === token).result).map(_.headOption)).flatMap { model =>
       if (model.hasExpired) {
         await(db.run(query.filter(_.id === model.id).delete))
@@ -182,7 +254,10 @@ trait UserDBO {
     *
     * @param token Token of session
     */
-  def deleteSession(token: String) = await(db.run(this.sessions.filter(_.token === token).delete))
+  def deleteSession(token: String) = {
+    checkNotNull(token, "null token", "")
+    await(db.run(this.sessions.filter(_.token === token).delete))
+  }
 
   /**
     * Verifies the specified username's password and returns the user if
@@ -193,6 +268,8 @@ trait UserDBO {
     * @return         User if successful, None otherwise
     */
   def verify(username: String, password: String): Option[User] = withName(username).flatMap { user =>
+    checkNotNull(username, "null username", "")
+    checkNotNull(password, "null password", "")
     if (checkpw(password, user.password))
       Some(user)
     else
@@ -219,9 +296,8 @@ trait UserDBO {
     * @return         User if found, None otherwise
     */
   def withName(username: String): Option[User] = {
-    await(db.run(this.users
-      .filter(_.username.toLowerCase === username.toLowerCase).result)
-      .map(_.headOption))
+    checkNotNull(username, "null username", "")
+    await(db.run(this.users.filter(_.username.toLowerCase === username.toLowerCase).result).map(_.headOption))
   }
 
   /**
@@ -230,8 +306,10 @@ trait UserDBO {
     * @param email  Email to lookup
     * @return       User if found, None otherwise
     */
-  def withEmail(email: String): Option[User]
-  = await(db.run(this.users.filter(_.email === email).result).map(_.headOption))
+  def withEmail(email: String): Option[User] = {
+    checkNotNull(email, "null email", "")
+    await(db.run(this.users.filter(_.email === email).result).map(_.headOption))
+  }
 
   /**
     * Checks if the specified user field is unique for the specified value.
@@ -240,15 +318,22 @@ trait UserDBO {
     * @param value  Value to check
     * @return       True if unique
     */
-  def isFieldUnique(rep: UserTable => Rep[String], value: String): Boolean
-  = await(db.run((!this.users.filter(rep(_) === value).exists).result))
+  def isFieldUnique(rep: UserTable => Rep[String], value: String): Boolean = {
+    checkNotNull(rep, "null rep", "")
+    await(db.run((!this.users.filter(rep(_) === value).exists).result))
+  }
 
 }
 
-final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider, config: SSOConfig) extends UserDBO {
+final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
+                                  config: SSOConfig,
+                                  override val totp: TotpAuth) extends UserDBO {
+
   override val dbConfig = this.provider.get[JdbcProfile]
   override val passwordSaltLogRounds = this.config.sso.getInt("password.saltLogRounds").get
   override val timeout = this.config.db.getLong("timeout").get.millis
   override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get
+  override val encryptionSecret: String = this.config.play.getString("crypto.secret").get
+
 }

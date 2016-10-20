@@ -18,13 +18,11 @@ case class Session(id: Option[Int] = None,
                    createdAt: Timestamp,
                    override val expiration: Timestamp,
                    username: String,
-                   override val token: String) extends TokenExpirable {
+                   override val token: String,
+                   isAuthenticated: Boolean = false) extends TokenExpirable {
 
   override type M = Session
   override type T = SessionTable
-
-  def this(createdAt: Timestamp, expiration: Timestamp, username: String, token: String)
-  = this(None, createdAt, expiration, username, token)
 
   /**
     * Returns the [[User]] this Session is associated with.

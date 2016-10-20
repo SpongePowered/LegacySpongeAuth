@@ -55,4 +55,7 @@ email.confirm.subject = Confirm your email with Sponge
 email.signature = Best regards,<br/>SpongePowered
 
 2fa.setup.title = Setup two-factor authentication
-2fa.setup.info = Secure your account be setting up two-factor authentication on your account with a mobile app such as Google Authenticator.
+2fa.setup.info = Secure your account be setting up two-factor authentication on your account with a mobile app such as Google Authenticator. Scan the QR Code below to get started.
+2fa.code.title = Enter your generated code
+2fa.code.submit = Verify
+2fa.code.info = Having trouble? <a href="#">Enter your code manually instead.</a>

@@ -7,14 +7,16 @@ import form.SignUpForm
 /**
   * Represents a Sponge user.
   *
-  * @param id         Unique ID
-  * @param createdAt  Timestamp of creation
-  * @param email      User email
-  * @param username   Username
-  * @param password   User's password (hashed)
-  * @param mcUsername Minecraft username
-  * @param ircNick    IRC nick
-  * @param ghUsername GitHub username
+  * @param id               Unique ID
+  * @param createdAt        Timestamp of creation
+  * @param email            User email
+  * @param isEmailConfirmed True if user has completed email confirmation
+  * @param username         Username
+  * @param password         User's password (hashed)
+  * @param mcUsername       Minecraft username
+  * @param ircNick          IRC nick
+  * @param ghUsername       GitHub username
+  * @param totpSecret       The user's TOTP secret if enabled (encrypted)
   */
 case class User(id: Option[Int] = None,
                 createdAt: Option[Timestamp] = None,
@@ -24,7 +26,8 @@ case class User(id: Option[Int] = None,
                 password: String,
                 mcUsername: Option[String] = None,
                 ircNick: Option[String] = None,
-                ghUsername: Option[String] = None) {
+                ghUsername: Option[String] = None,
+                totpSecret: Option[String] = None) {
 
   def this(email: String, username: String, password: String, mcUsername: String, ircNick: String,
            ghUsername: String) = {

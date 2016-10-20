@@ -14,6 +14,7 @@ POST    /email/confirm/resend       @controllers.Application.resendConfirmationE
 GET     /email/confirm/:token       @controllers.Application.confirmEmail(token)
 
 GET     /2fa/setup                  @controllers.Application.show2faSetup()
+POST    /2fa/verify                 @controllers.Application.verifyTotp()
 
 GET     /reset                      @controllers.Application.reset()
 

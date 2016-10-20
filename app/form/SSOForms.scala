@@ -38,4 +38,10 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     */
   lazy val ResendConfirmationEmail = Form(single("email" -> email))
 
+  /**
+    * The form submitted to verify a user with 2FA using a Time-based one
+    * time password.
+    */
+  lazy val VerifyTotp = Form(single("totp" -> number))
+
 }

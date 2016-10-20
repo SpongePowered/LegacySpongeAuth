@@ -1,0 +1,22 @@
+@import security.sso.SSOConfig
+@()(implicit messages: Messages, config: SSOConfig, request: Request[_])
+
+@bootstrap.layout(messages("2fa.verify.title")) {
+
+    <div class="container" style="margin: 90px;">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("2fa.verify.title")</h4>
+                    </div>
+
+                    <div class="panel-body">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

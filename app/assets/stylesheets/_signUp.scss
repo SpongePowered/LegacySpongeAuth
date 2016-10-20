@@ -1,13 +1,19 @@
 .panel-signup .panel-body {
-  form {
-    margin: 0;
-  }
+  form { margin: 0; }
+  div:not(:last-child) { margin-bottom: 10px; }
+  i { color: gray; }
+}
 
-  div:not(:last-child) {
-    margin-bottom: 10px;
-  }
+.qr-totp {
+  display: block;
+  margin: 0 auto;
+}
 
-  i {
-    color: gray;
-  }
+.form-totp {
+  text-align: center;
+  margin: 0 auto;
+  width: 300px;
+  input { margin: 0 auto; }
+  input, button { width: 100px; }
+  i { color: gray; }
 }
