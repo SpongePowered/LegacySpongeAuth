@@ -51,6 +51,8 @@ trait ApplicationHelpers extends Specification {
 
     def withUser(username: String): FakeRequest[A] = this.request.withSession(Security.username -> username)
 
+    def withSession(token: String): FakeRequest[A] = this.request.withCookies(Cookie("_token", token))
+
   }
 
   def doSignUp(request: FakeRequest[_],
@@ -107,12 +109,9 @@ trait ApplicationHelpers extends Specification {
     clientSession.get must equalTo(FakeUser.username)
   }
 
-  def assertNotAuthenticated(result: Future[play.api.mvc.Result]) = getAuthToken(result).isEmpty must equalTo(true)
-
   def assertCreated(result: Future[play.api.mvc.Result]): EmailConfirmation = {
     // Ensures a user is created and has an email confirmation
     status(result) must equalTo(SEE_OTHER)
-    assertNotAuthenticated(result)
     val user = this.users.withName(FakeUser.username)
     user.isDefined must equalTo(true)
 

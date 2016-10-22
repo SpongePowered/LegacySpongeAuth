@@ -14,7 +14,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val request = FakeRequest(GET, "/signup" + this.badSSOQuery)
         val showSignUp = route(this.app, request).get
         status(showSignUp) must equalTo(OK)
-        assertNotAuthenticated(showSignUp)
         getSSOToken(showSignUp).isEmpty must equalTo(true)
       }
 
@@ -24,7 +23,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val request = FakeRequest(GET, "/signup" + ssoQuery)
         val showSignUp = route(SSOSpec.this.app, request).get
         status(showSignUp) must equalTo(OK)
-        assertNotAuthenticated(showSignUp)
 
         val ssoToken = getSSOToken(showSignUp)
         ssoToken.isDefined must equalTo(true)
@@ -41,7 +39,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val confirmRequest = FakeRequest(GET, "/email/confirm/" + token.get).withSSO(ssoToken.get)
         val confirmCall = route(SSOSpec.this.app, confirmRequest).get
         status(confirmCall) must equalTo(SEE_OTHER)
-        assertAuthenticated(confirmCall)
 
         // Ensure that we are redirected from home
         val homeRedirect = redirectLocation(confirmCall).get
@@ -56,7 +53,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val request = FakeRequest(GET, "/signup" + SSOSpec.this.ssoQuery)
         val showSignUp = route(SSOSpec.this.app, request).get
         status(showSignUp) must equalTo(OK)
-        assertNotAuthenticated(showSignUp)
 
         val ssoToken = getSSOToken(showSignUp)
         ssoToken.isDefined must equalTo(true)
@@ -72,10 +68,9 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val confirmRequest = FakeRequest(GET, "/email/confirm/" + token.get).withSSO(ssoToken.get)
         val confirmCall = route(SSOSpec.this.app, confirmRequest).get
         status(confirmCall) must equalTo(SEE_OTHER)
-        assertAuthenticated(confirmCall)
 
         // Follow redirects to SSO origin
-        assertSSOSuccess(confirmCall, ssoToken.get, getAuthToken(confirmCall).get)
+        assertSSOSuccess(confirmCall, ssoToken.get, getAuthToken(signUp).get)
       }
     }
 
@@ -84,7 +79,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val request = FakeRequest(GET, "/login" + this.badSSOQuery)
         val showLogIn = route(this.app, request).get
         status(showLogIn) must equalTo(OK)
-        assertNotAuthenticated(showLogIn)
         getSSOToken(showLogIn).isEmpty must equalTo(true)
       }
 
@@ -94,7 +88,6 @@ final class SSOSpec extends Specification with ApplicationHelpers {
         val request = FakeRequest(GET, "/login" + ssoQuery)
         val showLogIn = route(SSOSpec.this.app, request).get
         status(showLogIn) must equalTo(OK)
-        assertNotAuthenticated(showLogIn)
 
         val ssoToken = getSSOToken(showLogIn)
         ssoToken.isDefined must equalTo(true)
@@ -124,7 +117,7 @@ final class SSOSpec extends Specification with ApplicationHelpers {
     }
 
     "via verify" in {
-      "fail without security.sso" in {
+      "fail without sso" in {
         val verify = route(this.app, FakeRequest(GET, "/verify")).get
         status(verify) must equalTo(BAD_REQUEST)
       }

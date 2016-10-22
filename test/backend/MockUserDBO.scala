@@ -6,13 +6,19 @@ import db.UserDBO
 import models.User
 import play.api.db.slick.DatabaseConfigProvider
 import play.db.NamedDatabase
+import security.sso.SSOConfig
+import security.totp.TotpAuth
 import slick.driver.JdbcProfile
 
-final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfigProvider) extends UserDBO {
+final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfigProvider,
+                                  override val totp: TotpAuth,
+                                  config: SSOConfig) extends UserDBO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
   override val maxSessionAge = MockUserDBO.maxSessionAge
   override val maxEmailConfirmationAge: Long = 10000
+  override val maxPasswordResetAge: Long = 10000
+  override val encryptionSecret = this.config.play.getString("crypto.secret").get
 
 }
 

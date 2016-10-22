@@ -3,7 +3,7 @@ import org.apache.commons.lang3.RandomStringUtils.{randomAlphanumeric => randomS
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import play.api.mvc.{Cookie, Security}
+import play.api.mvc.Cookie
 import play.api.test.Helpers._
 import play.api.test._
 
@@ -19,7 +19,6 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
       "redirect when unauthenticated" in {
         val home = route(this.app, FakeRequest(GET, "/")).get
         status(home) must equalTo(SEE_OTHER)
-        assertNotAuthenticated(home)
       }
 
       "instruct email confirmation if needed" in new WithServer {
@@ -27,13 +26,15 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
         status(signUp) must equalTo(SEE_OTHER)
         val confirmation = assertCreated(signUp)
 
-        val user = session(signUp).get(Security.username)
-        user.isDefined must equalTo(true)
+        val session = cookies(signUp).get("_token")
+        session.isDefined must equalTo(true)
 
         val redirect = redirectLocation(signUp).get
-        val home = route(ApplicationSpec.this.app, FakeRequest(GET, redirect).withUser(user.get)).get
+        val home = route(ApplicationSpec.this.app, FakeRequest(GET, redirect).withSession(session.get.value)).get
         status(home) must equalTo(OK)
         contentAsString(home) must contain(ApplicationSpec.this.messages("signup.confirmEmail", confirmation.email))
+
+        ApplicationSpec.this.users.removeAll()
       }
 
       "delete expired sessions" in new WithServer {
@@ -43,6 +44,8 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
         // create the user
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
         val confirmation = assertCreated(signUp)
+        val sessionToken = cookies(signUp).get("_token")
+        sessionToken.isDefined must equalTo(true)
 
         // confirm the user's email
         Thread.sleep(1000) // wait for mailer
@@ -51,11 +54,10 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
 
         val confirmCall = route(ApplicationSpec.this.app, FakeRequest(GET, "/email/confirm/" + token.get)).get
         status(confirmCall) must equalTo(SEE_OTHER)
-        assertAuthenticated(confirmCall)
 
         // ensure session will expire
         Thread.sleep(2000)
-        val session = getSession(getAuthToken(confirmCall).get.value)
+        val session = getSession(sessionToken.get.value)
         session.isEmpty must equalTo(true)
         ApplicationSpec.this.users.removeAll()
 
@@ -74,14 +76,8 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
 
         val confirmCall = route(ApplicationSpec.this.app, FakeRequest(GET, "/email/confirm/" + token.get)).get
         status(confirmCall) must equalTo(SEE_OTHER)
-        assertAuthenticated(confirmCall)
 
-        authToken = getAuthToken(confirmCall).get
-      }
-
-      "fail when authenticated" in {
-        val signUp = doSignUp(FakeRequest(POST, "/signup").withCookies(authToken))
-        status(signUp) must equalTo(BAD_REQUEST)
+        authToken = getAuthToken(signUp).get
       }
 
       "fail with taken email" in {
@@ -125,11 +121,6 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
     }
 
     "logIn" should {
-      "fail when authenticated" in {
-        val logIn = doLogIn(FakeRequest(POST, "/login").withCookies(authToken), FakeUser.username, FakeUser.password)
-        status(logIn) must equalTo(BAD_REQUEST)
-      }
-
       "fail with invalid username" in {
         val logIn = doLogIn(FakeRequest(POST, "/login"), "urmom", FakeUser.password)
         status(logIn) must equalTo(SEE_OTHER)
