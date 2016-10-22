@@ -1,5 +1,4 @@
 @import security.sso.SSOConfig
-@import views.html.helper.form
 @import controllers.routes.Application
 @()(implicit config: SSOConfig, messages: Messages, flash: Flash, request: Request[_])
 
@@ -14,16 +13,23 @@
                     </div>
 
                     <div class="panel-body">
-                        @form(action = Application.logIn()) {
+                        @helper.form(action = Application.logIn()) {
                             @utils.alert("error")
+                            @utils.alert("success")
 
                             @utils.inputField("username", "signup.username", info = false) {
                                 <input type="text" maxlength="20" class="form-control" name="username" required />
                             }
 
-                            @utils.inputField("password", "signup.password", info = false) {
+                            <div class="user-input">
+                                <label for="password">@messages("signup.password")</label>
+                                <i>
+                                    <a tabindex="-1" href="@Application.showPasswordReset(None)">
+                                        @messages("signup.password.forgot")
+                                    </a>
+                                </i>
                                 <input type="password" class="form-control" name="password" required />
-                            }
+                            </div>
 
                             <div class="pull-right">
                                 <a href="@Application.showSignUp(None, None)" class="btn btn-default">

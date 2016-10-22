@@ -2,7 +2,7 @@ package mail
 
 import javax.inject.Inject
 
-import models.EmailConfirmation
+import models.{EmailConfirmation, PasswordReset, User}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Request
 import security.sso.SSOConfig
@@ -23,6 +23,19 @@ final class Emails @Inject()(implicit override val messagesApi: MessagesApi, con
     recipient = model.email,
     subject = this.messagesApi("email.confirm.subject"),
     content = views.html.emails.confirm(model)
+  )
+
+  /**
+    * Composes a new "reset password" email.
+    *
+    * @param model    [[PasswordReset]] model
+    * @param request  Request context
+    * @return         New email
+    */
+  def resetPassword(model: PasswordReset)(implicit request: Request[_]) = Email(
+    recipient = model.email,
+    subject = this.messagesApi("email.resetPassword.subject"),
+    content = views.html.emails.resetPassword(model)
   )
 
 }

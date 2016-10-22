@@ -76,6 +76,8 @@ trait Actions extends Requests {
 
     def withError(error: String) = result.flashing("error" -> error)
 
+    def withSuccess(message: String) = result.flashing("success" -> message)
+
   }
 
   // Action impl

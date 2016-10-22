@@ -2,13 +2,11 @@ package controllers
 
 import javax.inject.Inject
 
-import com.google.common.base.Preconditions._
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SSOForms
 import mail.{Emails, Mailer}
 import play.api.cache.CacheApi
-import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import security.sso.{SSOConfig, SingleSignOn}
@@ -101,7 +99,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         has SSO request
     */
   def showLogIn(sso: Option[String], sig: Option[String]) = NotAuthenticated { implicit request =>
-    var result = Ok(views.html.logIn())
+    var result = Ok(views.html.login.form())
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // If the user is already logged in, redirect home
@@ -226,6 +224,58 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   }
 
   /**
+    * Displays the page where a user can reset their password.
+    *
+    * @param token  Verification token if being directed from an email
+    * @return       Password reset page
+    */
+  def showPasswordReset(token: Option[String]) = NotAuthenticated { implicit request =>
+    Ok(views.html.login.passwordReset(token))
+  }
+
+  /**
+    * Sends the submitted username an email with a link to reset their password.
+    *
+    * @return Password reset page
+    */
+  def sendPasswordReset() = NotAuthenticated { implicit request =>
+    this.forms.SendPasswordReset.bindFromRequest().fold(
+      hasErrors =>
+        FormError(Application.showPasswordReset(None), hasErrors),
+      username => {
+        this.users.withName(username) match {
+          case None =>
+            Redirect(Application.showPasswordReset(None)).withError("error.notFound.username")
+          case Some(user) =>
+            val email = this.emails.resetPassword(this.users.createPasswordReset(user))
+            this.mailer.push(email)
+            Redirect(Application.showPasswordReset(None)).flashing("sent" -> "true")
+        }
+      }
+    )
+  }
+
+  /**
+    * Resets the password of the user with the associated token to the
+    * submitted value.
+    *
+    * @param token  Authenticity token
+    * @return       Log in page if successful
+    */
+  def resetPassword(token: String) = NotAuthenticated { implicit request =>
+    this.forms.ResetPassword.bindFromRequest().fold(
+      hasErrors =>
+        FormError(Application.showPasswordReset(Some(token)), hasErrors),
+      newPassword => {
+        if (this.users.resetPassword(token, newPassword))
+          Redirect(Application.showLogIn(None, None)).withSuccess("success.reset.password")
+        else
+          Redirect(Application.showPasswordReset(None)).withError("error.expired.password")
+      }
+    )
+  }
+
+  /**
     * Clears the current session.
     *
     * @return Redirection to login form
@@ -252,7 +302,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         BadRequest
       case Some(so) =>
         // Show form with SSO reference
-        SingleSignOn.addToResult(Ok(views.html.verify(sso, sig)), Some(so))
+        SingleSignOn.addToResult(Ok(views.html.login.verify(sso, sig)), Some(so))
     }
   }
 

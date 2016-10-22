@@ -11,9 +11,12 @@ general.terms           =   Terms
 general.contact         =   Contact
 general.about           =   About
 general.sponsors        =   Sponsors
+general.back            =   Back
+general.submit          =   Submit
 
 error.minLength.password    =   Password too short.
 error.maxLength.password    =   Password too long.
+error.expired.password      =   You took too long to reset your password, please try again.
 error.minLength.username    =   Username too short.
 error.maxLength.username    =   Username too long.
 error.verify.user           =   Invalid username or password.
@@ -23,9 +26,11 @@ error.unique.mcUsername     =   An account with that Minecraft username already 
 error.unique.ircNick        =   An account with that IRC nick already exists.
 error.unique.ghUsername     =   An account with that GitHub username already exists.
 error.malformed.username    =   Username must not contain spaces.
+error.notFound.username     =   No user with that username exists.
 error.number.totp           =   The entered code must be a six-digit integer.
 error.digits.totp           =   The entered code must be a six-digit integer.
 
+success.reset.password      =   Password reset.
 
 signup.title            =   Sign up
 signup.email            =   Email
@@ -33,6 +38,7 @@ signup.email.info       =   Never displayed publicly
 signup.username         =   Username
 signup.username.info    =   Unique, no spaces, max 20 characters
 signup.password         =   Password
+signup.password.forgot  =   Forgot your password?
 signup.password.info    =   At least 10 characters
 signup.mcUsername       =   Minecraft Username
 signup.mcUsername.info  =   Enter the username you use for Minecraft here
@@ -44,7 +50,11 @@ signup.optional         =   optional
 signup.confirmEmail     =   An email has been sent to the address <strong>{0}</strong>. Please confirm your email there to complete registration.
 signup.2fa              =   Secure my account with two-factor authentication
 
+login.password.forgot.title = Reset your password.
+login.password.forgot.info = Enter the username you signed up with to receive an email with a link where you can reset your password.
+
 login.title = Log in
+login.password.forgot.sent.info = Check your email. We sent you a link where you can finish resetting your password.
 
 home.title      =   Sponge Authentication Portal
 home.info       =   You are currently logged in as {0}.
@@ -54,6 +64,9 @@ home.redirect   =   Returning to original site...
 email.confirm.title = SpongePowered
 email.confirm.message = Welcome to SpongePowered! Click the link below to confirm your new account with us.
 email.confirm.subject = Confirm your email with Sponge
+email.resetPassword.title = SpongePowered
+email.resetPassword.message = You recently requested to reset your password with us. Click the link below to reset your password.
+email.resetPassword.subject = Reset your password with Sponge
 email.signature = Best regards,<br/>SpongePowered
 
 2fa.setup.title = Setup two-factor authentication

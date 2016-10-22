@@ -16,7 +16,7 @@ trait Constraints {
   val users: UserDBO
 
   import this.users.isFieldUnique
-  import this.config.sso.getInt
+  import this.config.security.getInt
 
   val usernameRegex = "^\\S*$"
 

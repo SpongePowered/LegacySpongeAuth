@@ -46,4 +46,15 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     "totp" -> number.verifying("error.digits", _.toString.length == this.config.totp.getInt("digits").get)
   ))
 
+  /**
+    * The form submitted to send an email where a user can reset their
+    * password.
+    */
+  lazy val SendPasswordReset = Form(single("username" -> username))
+
+  /**
+    * The form submitted to reset a user's password.
+    */
+  lazy val ResetPassword = Form(single("password" -> password))
+
 }

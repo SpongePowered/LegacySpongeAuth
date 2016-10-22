@@ -5,9 +5,9 @@ import java.util.{Date, UUID}
 import javax.inject.Inject
 
 import com.google.common.base.Preconditions._
-import db.schema.{EmailConfirmationTable, SessionTable, UserTable}
+import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable, UserTable}
 import form.SignUpForm
-import models.{EmailConfirmation, TokenExpirable, User}
+import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
 import org.mindrot.jbcrypt.BCrypt._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
@@ -32,6 +32,7 @@ trait UserDBO {
   val users = TableQuery[UserTable]
   val sessions = TableQuery[SessionTable]
   val emailConfirms = TableQuery[EmailConfirmationTable]
+  val passwordResets = TableQuery[PasswordResetTable]
 
   /** The argument to be supplied to [[org.mindrot.jbcrypt.BCrypt.gensalt()]] */
   val passwordSaltLogRounds: Int = 10
@@ -41,6 +42,8 @@ trait UserDBO {
   val maxSessionAge: Int
   /** The maximum age of an [[EmailConfirmation]] */
   val maxEmailConfirmationAge: Long
+  /** The maximum age of an [[PasswordReset]] */
+  val maxPasswordResetAge: Long
   /** [[TotpAuth]] instance */
   val totp: TotpAuth
   /** Secret string used for two-way encryption */
@@ -64,12 +67,14 @@ trait UserDBO {
   def createUser(formData: SignUpForm): EmailConfirmation = {
     checkNotNull(formData, "null form data", "")
     // Create user
-    val pwdHash = hashpw(formData.password, gensalt(this.passwordSaltLogRounds))
+    val pwdHash = hash(formData.password)
     var user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(theTime))
     val userInsert = this.users returning this.users += user
     user = await(db.run(userInsert))
     createEmailConfirmation(user)
   }
+
+  private def hash(pwd: String) = hashpw(pwd, gensalt(this.passwordSaltLogRounds))
 
   /**
     * Deletes the pending [[EmailConfirmation]] of the specified token if it
@@ -302,6 +307,59 @@ trait UserDBO {
   }
 
   /**
+    * Deletes any [[PasswordReset]]s associated with the specified [[User]].
+    *
+    * @param user User to delete password resets of
+    */
+  def deletePasswordReset(user: User) = await(db.run(this.passwordResets.filter(_.email === user.email).delete))
+
+  /**
+    * Creates a new instance of a [[PasswordReset]] for the specified [[User]].
+    *
+    * @param user User that is resetting their password
+    * @return     New PasswordReset instance
+    */
+  def createPasswordReset(user: User): PasswordReset = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    val expiration = new Timestamp(new Date().getTime + this.maxPasswordResetAge)
+    val token = UUID.randomUUID().toString.replace("-", "")
+    val model = PasswordReset(None, theTime, expiration, token, user.email)
+    val query = this.passwordResets returning this.passwordResets += model
+    await(db.run(query))
+  }
+
+  /**
+    * Returns a [[PasswordReset]] model with the given token. If the model has
+    * expired it will be deleted immediately and None will be returned.
+    *
+    * @param token  Token to lookup
+    * @return       PasswordReset with token
+    */
+  def getPasswordReset(token: String): Option[PasswordReset]
+  = getTokenExpirable[PasswordReset](this.passwordResets, token)
+
+  /**
+    * Resets a user's password using a unique [[PasswordReset]] token to
+    * verify the request. The associated PasswordReset will be deleted once the
+    * user's password has been updated.
+    *
+    * @param token        Token to lookup
+    * @param newPassword  New password to set
+    * @return             True if successful
+    */
+  def resetPassword(token: String, newPassword: String): Boolean = {
+    checkNotNull(newPassword, "null password", "")
+    getPasswordReset(token).exists { model =>
+      val user = model.user
+      val updateStatement = for { u <- this.users if u.id === user.id.get } yield u.password
+      await(db.run(updateStatement.update(hash(newPassword))))
+      deletePasswordReset(user)
+      true
+    }
+  }
+
+  /**
     * Removes all [[User]]s from the database.
     */
   def removeAll() = await(db.run(this.users.delete))
@@ -355,10 +413,11 @@ final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
                                   override val totp: TotpAuth) extends UserDBO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
-  override val passwordSaltLogRounds = this.config.sso.getInt("password.saltLogRounds").get
+  override val passwordSaltLogRounds = this.config.security.getInt("password.saltLogRounds").get
   override val timeout = this.config.db.getLong("timeout").get.millis
   override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get
+  override val maxPasswordResetAge = this.config.security.getLong("password.maxResetAge").get
   override val encryptionSecret: String = this.config.play.getString("crypto.secret").get
 
 }
