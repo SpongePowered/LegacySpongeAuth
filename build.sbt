@@ -1,8 +1,8 @@
-name := "spongesso"
+name := "spongeauth"
 
 version := "1.0"
 
-lazy val `spongesso` = (project in file(".")).enablePlugins(PlayScala)
+lazy val `spongeauth` = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.7"
 
