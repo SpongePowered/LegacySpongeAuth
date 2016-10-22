@@ -74,8 +74,20 @@ trait Actions extends Requests {
       result.withSession(Security.username -> session.username).withCookies(cookie)
     }
 
+    /**
+      * Adds an error message to the result.
+      *
+      * @param error  Error message
+      * @return       Result with error
+      */
     def withError(error: String) = result.flashing("error" -> error)
 
+    /**
+      * Adds a success message to the result.
+      *
+      * @param message  Success message
+      * @return         Result with message
+      */
     def withSuccess(message: String) = result.flashing("success" -> message)
 
   }

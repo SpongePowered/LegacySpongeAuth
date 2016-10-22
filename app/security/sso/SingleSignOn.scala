@@ -40,14 +40,14 @@ import scala.concurrent.duration.Duration
   * @param session  The Session of the request
   * @param cacheApi CacheApi instance
   */
-class SingleSignOn(secret: String,
-                   val maxAge: Duration,
-                   val payload: String,
-                   val sig: String,
-                   var id: String = null,
-                   var ignoreSession: Boolean = false)
-                  (implicit session: Session,
-                   cacheApi: CacheApi) {
+class SingleSignOn private (secret: String,
+                            val maxAge: Duration,
+                            val payload: String,
+                            val sig: String,
+                            var id: String = null,
+                            var ignoreSession: Boolean = false)
+                           (implicit session: Session,
+                            cacheApi: CacheApi) {
 
   private val CharEncoding = "UTF-8"
 

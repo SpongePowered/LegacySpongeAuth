@@ -311,7 +311,11 @@ trait UserDBO {
     *
     * @param user User to delete password resets of
     */
-  def deletePasswordReset(user: User) = await(db.run(this.passwordResets.filter(_.email === user.email).delete))
+  def deletePasswordReset(user: User) = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    await(db.run(this.passwordResets.filter(_.email === user.email).delete))
+  }
 
   /**
     * Creates a new instance of a [[PasswordReset]] for the specified [[User]].

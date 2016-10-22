@@ -6,6 +6,8 @@ import java.nio.file.{Files, Path}
 import javax.imageio.ImageIO
 import javax.xml.bind.DatatypeConverter
 
+import com.google.common.base.Preconditions.checkNotNull
+
 /**
   * A wrapper around a [[BufferedImage]] to represent a rendered QR code.
   *
@@ -23,6 +25,7 @@ case class RenderedQrCode(underlying: BufferedImage) {
     * @return       Encoded data URI
     */
   def toDataUri(format: String = DefaultFormat) = {
+    checkNotNull(format, "null format", "")
     val out = new ByteArrayOutputStream
     ImageIO.write(this.underlying, format, out)
     s"data:image/$format;base64,${DatatypeConverter.printBase64Binary(out.toByteArray)}"
@@ -35,6 +38,8 @@ case class RenderedQrCode(underlying: BufferedImage) {
     * @param format Image format
     */
   def writeToFile(path: Path, format: String = DefaultFormat) = {
+    checkNotNull(path, "null path", "")
+    checkNotNull(format, "null format", "")
     val out = Files.newOutputStream(path)
     ImageIO.write(this.underlying, format, out)
     out.flush()

@@ -5,6 +5,7 @@ import java.security.SecureRandom
 import java.util.Date
 import javax.inject.Inject
 
+import com.google.common.base.Preconditions._
 import org.apache.commons.codec.binary.Base32
 import security.CryptoUtils._
 import security.sso.SSOConfig
@@ -120,6 +121,10 @@ trait TotpAuth {
     * @return       True if valid code
     */
   def checkCode(secret: String, code: Int, time: Long): Boolean = {
+    checkNotNull(secret, "null secret", "")
+    checkArgument(secret.nonEmpty, "empty secret", "")
+    checkArgument(code.toString.length == this.digits, "invalid amount of digits", "")
+    checkArgument(time >= 0, "invalid timestamp", "")
     val decodedSecret = SecretCodec.decode(secret)
     // Check codes in the past and future to allow for some wiggle room
     val windowSecs = this.window.toSeconds
@@ -148,6 +153,10 @@ trait TotpAuth {
     * @return       Validation code
     */
   def generateCode(secret: Array[Byte], time: Long): Int = {
+    checkNotNull(secret, "null secret", "")
+    checkArgument(secret.nonEmpty, "empty secret", "")
+    checkArgument(time >= 0, "invalid timestamp", "")
+
     // Generate hash from time
     val data = ByteBuffer.allocate(java.lang.Long.BYTES).putLong(time).array()
     val hash = hmac(this.algo, secret, data)
@@ -207,6 +216,10 @@ trait TotpAuth {
     * @return       New URI string
     */
   def generateUri(user: String, secret: String): String = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.nonEmpty, "empty user", "")
+    checkNotNull(secret, "null secret", "")
+    checkArgument(secret.nonEmpty, "empty secret", "")
     s"otpauth://totp/$issuer:$user" +
       s"?secret=$secret" +
       s"&issuer=$issuer" +

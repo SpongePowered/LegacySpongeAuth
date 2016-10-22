@@ -4,6 +4,7 @@ import java.awt.Color
 import java.awt.image.BufferedImage
 import javax.inject.Inject
 
+import com.google.common.base.Preconditions._
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
@@ -26,6 +27,10 @@ trait QrCodeRenderer {
     * @return                 A new [[RenderedQrCode]]
     */
   def render(content: String, width: Int, height: Int, backgroundColor: Color = Color.WHITE) = {
+    checkNotNull(content, "null content", "")
+    checkArgument(width > 0, "invalid width", "")
+    checkArgument(height > 0, "invalid height", "")
+    checkNotNull(backgroundColor, "null bg color", "")
     val matrix = this.writer.encode(content, BarcodeFormat.QR_CODE, width, height)
     val mWidth = matrix.getWidth
     val mHeight = matrix.getHeight
