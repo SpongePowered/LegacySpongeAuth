@@ -1,7 +1,7 @@
-@import security.sso.SSOConfig
-@import views.html.helper.form
 @import controllers.routes.Application
-@(sso: Option[String], sig: Option[String])(implicit config: SSOConfig, messages: Messages, flash: Flash,
+@import security.SpongeAuthConfig
+@import views.html.helper.form
+@(sso: Option[String], sig: Option[String])(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash,
         request: Request[_])
 
 @bootstrap.layout(messages("verify.title")) {

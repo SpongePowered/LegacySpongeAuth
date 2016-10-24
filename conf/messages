@@ -22,11 +22,13 @@ error.maxLength.username    =   Username too long.
 error.verify.user           =   Invalid username or password.
 error.unique.email          =   An account with that email already exists.
 error.unique.username       =   An account with that username already exists.
-error.unique.mcUsername     =   An account with that Minecraft username already exists.
-error.unique.ircNick        =   An account with that IRC nick already exists.
-error.unique.ghUsername     =   An account with that GitHub username already exists.
+error.unique.mc-username    =   An account with that Minecraft username already exists.
+error.unique.irc-nick       =   An account with that IRC nick already exists.
+error.unique.gh-username    =   An account with that GitHub username already exists.
 error.malformed.username    =   Username must not contain spaces.
 error.notFound.username     =   No user with that username exists.
+error.notFound.mc-username  =   No Minecraft profile exists with that name.
+error.notFound.gh-username  =   No GitHub account exists with that name.
 error.number.totp           =   The entered code must be a six-digit integer.
 error.digits.totp           =   The entered code must be a six-digit integer.
 

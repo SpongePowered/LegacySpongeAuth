@@ -3,14 +3,18 @@ package form
 import javax.inject.Inject
 
 import db.UserDBO
+import external.{GitHubApi, MojangApi}
 import play.api.data.Form
 import play.api.data.Forms._
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 
 /**
   * A collection of forms used by Sponge SSO.
   */
-final class SSOForms @Inject()(override val config: SSOConfig, override val users: UserDBO) extends Constraints {
+final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
+                                      override val users: UserDBO,
+                                      override val mojang: MojangApi,
+                                      override val gitHub: GitHubApi) extends Constraints {
 
   /**
     * The form submitted upon log in.
@@ -28,9 +32,9 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     "username" -> username.unique(_.username),
     "password" -> password,
     "2fa" -> optional(boolean),
-    "mc-username" -> optional(nonEmptyText).unique(_.mcUsername),
+    "mc-username" -> minecraftUsername,
     "irc-nick" -> optional(nonEmptyText).unique(_.ircNick),
-    "gh-username" -> optional(nonEmptyText).unique(_.ghUsername)
+    "gh-username" -> gitHubUsername
   )(SignUpForm.apply)(SignUpForm.unapply))
 
   /**
@@ -42,9 +46,7 @@ final class SSOForms @Inject()(override val config: SSOConfig, override val user
     * The form submitted to verify a user with 2FA using a Time-based one
     * time password.
     */
-  lazy val VerifyTotp = Form(single(
-    "totp" -> number.verifying("error.digits", _.toString.length == this.config.totp.getInt("digits").get)
-  ))
+  lazy val VerifyTotp = Form(single("totp" -> totp))
 
   /**
     * The form submitted to send an email where a user can reset their

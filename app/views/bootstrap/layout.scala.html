@@ -3,8 +3,8 @@ Base layout template for website. Most templates within the project will extend
 this.
 *@
 @import play.twirl.api.Html
-@import security.sso.SSOConfig
-@(title: String, header: Boolean = true, footer: Boolean = true)(content: Html)(implicit config: SSOConfig,
+@import security.SpongeAuthConfig
+@(title: String, header: Boolean = true, footer: Boolean = true)(content: Html)(implicit config: SpongeAuthConfig,
         messages: Messages, request: Request[_])
 
 <!DOCTYPE html>

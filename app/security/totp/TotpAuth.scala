@@ -8,7 +8,7 @@ import javax.inject.Inject
 import com.google.common.base.Preconditions._
 import org.apache.commons.codec.binary.Base32
 import security.CryptoUtils._
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 
 import scala.concurrent.duration._
 
@@ -230,7 +230,7 @@ trait TotpAuth {
 
 }
 
-final class TotpAuthImpl @Inject()(config: SSOConfig) extends TotpAuth {
+final class TotpAuthImpl @Inject()(config: SpongeAuthConfig) extends TotpAuth {
 
   import config.totp.{getInt, getString}
 

@@ -11,7 +11,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Cookie, Security}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import security.sso.{SSOConfig, SingleSignOn}
+import security.sso.{SpongeAuthConfig, SingleSignOn}
 
 import scala.concurrent.Future
 
@@ -29,7 +29,7 @@ trait ApplicationHelpers extends Specification {
     .build()
 
   val injector = this.app.injector
-  val config = this.injector.instanceOf[SSOConfig]
+  val config = this.injector.instanceOf[SpongeAuthConfig]
   val cache = this.injector.instanceOf[CacheApi]
   val messages = this.injector.instanceOf[MessagesApi]
 

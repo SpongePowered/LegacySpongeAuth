@@ -1,6 +1,6 @@
-@import security.sso.SSOConfig
 @import controllers.routes.Application
-@()(implicit config: SSOConfig, messages: Messages, flash: Flash, request: Request[_])
+@import security.SpongeAuthConfig
+@()(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash, request: Request[_])
 
 @bootstrap.layout(messages("login.title")) {
 

@@ -1,7 +1,7 @@
-@import security.sso.SSOConfig
-@import security.totp.qr.RenderedQrCode
 @import controllers.routes.TwoFactorAuth
-@(qr: RenderedQrCode)(implicit messages: Messages, request: Request[_], config: SSOConfig, flash: Flash)
+@import security.SpongeAuthConfig
+@import security.totp.qr.RenderedQrCode
+@(qr: RenderedQrCode)(implicit messages: Messages, request: Request[_], config: SpongeAuthConfig, flash: Flash)
 
 @bootstrap.layout(messages("2fa.setup.title")) {
 

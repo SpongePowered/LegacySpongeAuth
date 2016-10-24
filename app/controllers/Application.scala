@@ -4,12 +4,13 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
-import form.SSOForms
+import form.SpongeAuthForms
 import mail.{Emails, Mailer}
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import security.sso.{SSOConfig, SingleSignOn}
+import security.SpongeAuthConfig
+import security.sso.SingleSignOn
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 
@@ -19,14 +20,14 @@ import scala.concurrent.duration._
   * Main entry point for Sponge SSO.
   */
 final class Application @Inject()(override val messagesApi: MessagesApi,
-                                  forms: SSOForms,
+                                  forms: SpongeAuthForms,
                                   mailer: Mailer,
                                   emails: Emails,
                                   totp: TotpAuth,
                                   qrRenderer: QrCodeRenderer,
                                   implicit override val users: UserDBO,
                                   implicit val cache: CacheApi,
-                                  implicit val config: SSOConfig) extends Controller with I18nSupport with Actions {
+                                  implicit val config: SpongeAuthConfig) extends Controller with I18nSupport with Actions {
 
   private val ssoSecret = this.config.sso.getString("secret").get
   private val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis

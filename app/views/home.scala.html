@@ -1,6 +1,6 @@
-@import security.sso.SSOConfig
 @import controllers.routes.Application
-@(user: User, redirect: Option[String])(implicit config: SSOConfig, messages: Messages, request: Request[_])
+@import security.SpongeAuthConfig
+@(user: User, redirect: Option[String])(implicit config: SpongeAuthConfig, messages: Messages, request: Request[_])
 
 @bootstrap.layout(messages("home.title")) {
 

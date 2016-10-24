@@ -9,11 +9,11 @@ import javax.mail.internet.{InternetAddress, MimeMessage}
 
 import akka.actor.{ActorSystem, Scheduler}
 import com.sun.net.ssl.internal.ssl.Provider
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 /**
   * Handles dispatch of emails to users. Particularly for email verification.
@@ -99,7 +99,7 @@ trait Mailer extends Runnable {
 }
 
 @Singleton
-final class MailerImpl @Inject()(config: SSOConfig, actorSystem: ActorSystem) extends Mailer {
+final class MailerImpl @Inject()(config: SpongeAuthConfig, actorSystem: ActorSystem) extends Mailer {
 
   private val conf = this.config.mail
 

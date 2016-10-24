@@ -12,7 +12,7 @@ import org.mindrot.jbcrypt.BCrypt._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
 import security.CryptoUtils._
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 import security.totp.TotpAuth
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
@@ -413,7 +413,7 @@ trait UserDBO {
 }
 
 final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
-                                  config: SSOConfig,
+                                  config: SpongeAuthConfig,
                                   override val totp: TotpAuth) extends UserDBO {
 
   override val dbConfig = this.provider.get[JdbcProfile]

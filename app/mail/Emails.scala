@@ -2,15 +2,15 @@ package mail
 
 import javax.inject.Inject
 
-import models.{EmailConfirmation, PasswordReset, User}
+import models.{EmailConfirmation, PasswordReset}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Request
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 
 /**
   * Helper class for [[Email]] composition.
   */
-final class Emails @Inject()(implicit override val messagesApi: MessagesApi, config: SSOConfig) extends I18nSupport {
+final class Emails @Inject()(implicit override val messagesApi: MessagesApi, config: SpongeAuthConfig) extends I18nSupport {
 
   /**
     * Composes a new confirmation email.

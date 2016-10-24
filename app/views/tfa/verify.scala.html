@@ -1,6 +1,6 @@
-@import security.sso.SSOConfig
 @import controllers.routes.TwoFactorAuth
-@()(implicit messages: Messages, config: SSOConfig, request: Request[_], flash: Flash)
+@import security.SpongeAuthConfig
+@()(implicit messages: Messages, config: SpongeAuthConfig, request: Request[_], flash: Flash)
 
 @bootstrap.layout(messages("2fa.verify.title")) {
 

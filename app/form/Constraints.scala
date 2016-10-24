@@ -1,10 +1,11 @@
 package form
 
-import db.schema.UserTable
 import db.UserDBO
+import db.schema.UserTable
+import external.{GitHubApi, MojangApi}
 import play.api.data.Forms._
 import play.api.data.Mapping
-import security.sso.SSOConfig
+import security.SpongeAuthConfig
 import slick.driver.PostgresDriver.api._
 
 /**
@@ -12,11 +13,13 @@ import slick.driver.PostgresDriver.api._
   */
 trait Constraints {
 
-  val config: SSOConfig
+  val config: SpongeAuthConfig
   val users: UserDBO
+  val mojang: MojangApi
+  val gitHub: GitHubApi
 
-  import this.users.isFieldUnique
-  import this.config.security.getInt
+  import config.security.getInt
+  import users.isFieldUnique
 
   val usernameRegex = "^\\S*$"
 
@@ -30,7 +33,15 @@ trait Constraints {
     maxLength = getInt("password.maxLen").get
   )
 
-  val totp = number verifying(_.toString.length == this.config.totp.getInt("digits").get)
+  val totp = number verifying("error.digits", _.toString.length == this.config.totp.getInt("digits").get)
+
+  val minecraftUsername = optional(
+    nonEmptyText verifying("error.notFound", this.mojang.getMinecraftProfile(_).isDefined)
+  ).unique(_.mcUsername)
+
+  val gitHubUsername = optional(
+    nonEmptyText verifying("error.notFound", this.gitHub.getUser(_).isDefined)
+  ).unique(_.ghUsername)
 
   /**
     * A wrapper for a String [[Mapping]].
