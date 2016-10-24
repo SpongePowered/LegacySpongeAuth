@@ -43,13 +43,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *             and has SSO request.
     */
   def showSignUp(sso: Option[String], sig: Option[String]) = NotAuthenticated { implicit request =>
-    var result = Ok(views.html.signup.view(sso, sig))
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
-    // If the user is already logged in, redirect home
-    this.users.current.foreach(user => result = Redirect(Application.showHome()))
     // Return result with SSO request reference (if any)
-    SingleSignOn.addToResult(result, signOn)
+    SingleSignOn.addToResult(Ok(views.html.signup.view(sso, sig)), signOn)
   }
 
   /**
@@ -99,13 +96,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         has SSO request
     */
   def showLogIn(sso: Option[String], sig: Option[String]) = NotAuthenticated { implicit request =>
-    var result = Ok(views.html.login.form())
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
-    // If the user is already logged in, redirect home
-    this.users.current.foreach(user => result = Redirect(Application.showHome()))
     // Return result with SSO reference (if any)
-    SingleSignOn.addToResult(result, signOn)
+    SingleSignOn.addToResult(Ok(views.html.login.form()), signOn)
   }
 
   /**
