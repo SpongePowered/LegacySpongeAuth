@@ -14,8 +14,6 @@ import security.sso.SingleSignOn
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 
-import scala.concurrent.duration._
-
 /**
   * Main entry point for Sponge SSO.
   */
@@ -26,11 +24,9 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   totp: TotpAuth,
                                   qrRenderer: QrCodeRenderer,
                                   implicit override val users: UserDBO,
-                                  implicit val cache: CacheApi,
-                                  implicit val config: SpongeAuthConfig) extends Controller with I18nSupport with Actions {
-
-  private val ssoSecret = this.config.sso.getString("secret").get
-  private val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
+                                  implicit override val cache: CacheApi,
+                                  implicit override val config: SpongeAuthConfig)
+                                  extends Controller with I18nSupport with Actions {
 
   /**
     * Displays the sign up form. If there is an incoming SSO payload it will
@@ -43,7 +39,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *             has no SSO request, or redirect to SSO origin if authenticated
     *             and has SSO request.
     */
-  def showSignUp(sso: Option[String], sig: Option[String]) = NotAuthenticated { implicit request =>
+  def showSignUp(sso: Option[String], sig: Option[String]) = SSORedirect(sso, sig) { implicit request =>
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // Return result with SSO request reference (if any)
@@ -96,7 +92,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         no SSO request, and redirect to SSO origin if authenticated and
     *         has SSO request
     */
-  def showLogIn(sso: Option[String], sig: Option[String]) = NotAuthenticated { implicit request =>
+  def showLogIn(sso: Option[String], sig: Option[String]) = SSORedirect(sso, sig) { implicit request =>
     // Parse and cache any incoming SSO request
     val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // Return result with SSO reference (if any)

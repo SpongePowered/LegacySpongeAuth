@@ -5,6 +5,7 @@ import javax.inject.Inject
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SpongeAuthForms
+import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Controller
 import security.CryptoUtils._
@@ -20,7 +21,9 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
                                     totp: TotpAuth,
                                     qrRenderer: QrCodeRenderer,
                                     forms: SpongeAuthForms,
-                                    implicit val config: SpongeAuthConfig) extends Controller with I18nSupport with Actions {
+                                    override val cache: CacheApi,
+                                    implicit override val config: SpongeAuthConfig)
+                                    extends Controller with I18nSupport with Actions {
 
   val encryptionSecret: String = this.config.play.getString("crypto.secret").get
 

@@ -3,11 +3,15 @@ package controllers
 import com.google.common.base.Preconditions._
 import db.UserDBO
 import models.{User, Session => DbSession}
+import play.api.cache.CacheApi
 import play.api.data.Form
 import play.api.mvc.Results._
 import play.api.mvc._
+import security.SpongeAuthConfig
+import security.sso.SingleSignOn
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
   * A collection of custom actions used by the application.
@@ -15,9 +19,16 @@ import scala.concurrent.Future
 trait Actions extends Requests {
 
   val users: UserDBO
+  val config: SpongeAuthConfig
+  val ssoSecret = this.config.sso.getString("secret").get
+  val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
+
+  implicit val cache: CacheApi
 
   /** Ensures a request is not authenticated */
-  def NotAuthenticated = Action andThen notAuthActon
+  def SSORedirect(sso: Option[String], sig: Option[String]) = Action andThen notAuthActon(sso, sig)
+
+  def NotAuthenticated = SSORedirect(None, None)
 
   /** Ensures a request is authenticated */
   def Authenticated = Action andThen authAction
@@ -94,9 +105,16 @@ trait Actions extends Requests {
 
   // Action impl
 
-  private def notAuthActon = new ActionFilter[Request] {
+  private def notAuthActon(sso: Option[String], sig: Option[String]) = new ActionFilter[Request] {
     def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful {
-      Actions.this.users.current(request).map(user => Redirect(routes.Application.showHome()))
+      val signOn = SingleSignOn.parseValidateAndCache(
+        secret = Actions.this.ssoSecret,
+        maxAge = Actions.this.ssoMaxAge,
+        sso = sso,
+        sig = sig
+      )(request.session, Actions.this.cache)
+      val result = SingleSignOn.addToResult(Redirect(routes.Application.showHome()), signOn)
+      Actions.this.users.current(request).map(_ => result)
     }
   }
 
