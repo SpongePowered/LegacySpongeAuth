@@ -23,6 +23,8 @@ POST    /2fa/setup                  @controllers.TwoFactorAuth.confirmTotp()
 GET     /2fa/verify                 @controllers.TwoFactorAuth.showVerification()
 POST    /2fa/verify                 @controllers.TwoFactorAuth.verifyTotp()
 
+GET     /statusz                    @controllers.Application.showStatusZ()
+
 GET     /reset                      @controllers.Application.reset()
 
 # Map static resources from the /public folder to the /assets URL path

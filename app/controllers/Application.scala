@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
+import external.StatusZ
 import form.SpongeAuthForms
 import mail.{Emails, Mailer}
 import play.api.cache.CacheApi
@@ -23,6 +24,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   emails: Emails,
                                   totp: TotpAuth,
                                   qrRenderer: QrCodeRenderer,
+                                  status: StatusZ,
                                   implicit override val users: UserDBO,
                                   implicit override val cache: CacheApi,
                                   implicit override val config: SpongeAuthConfig)
@@ -331,6 +333,15 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           }
         )
     }
+  }
+
+  /**
+    * Displays status information about the application.
+    *
+    * @return Status information
+    */
+  def showStatusZ() = Action {
+    Ok(this.status.json)
   }
 
   /**
