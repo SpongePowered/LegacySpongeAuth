@@ -11,7 +11,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Cookie, Security}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import security.sso.{SpongeAuthConfig, SingleSignOn}
+import security.SpongeAuthConfig
+import security.sso.SingleSignOn
 
 import scala.concurrent.Future
 

@@ -8,11 +8,10 @@ import com.google.common.base.Preconditions._
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable, UserTable}
 import form.SignUpForm
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
-import org.mindrot.jbcrypt.BCrypt._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
 import security.CryptoUtils._
-import security.SpongeAuthConfig
+import security.{PasswordFactory, SpongeAuthConfig}
 import security.totp.TotpAuth
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
@@ -34,8 +33,6 @@ trait UserDBO {
   val emailConfirms = TableQuery[EmailConfirmationTable]
   val passwordResets = TableQuery[PasswordResetTable]
 
-  /** The argument to be supplied to [[org.mindrot.jbcrypt.BCrypt.gensalt()]] */
-  val passwordSaltLogRounds: Int = 10
   /** The maximum wait time for database queries */
   val timeout: Duration = 10.seconds
   /** The maximum age of a [[models.Session]] */
@@ -48,6 +45,8 @@ trait UserDBO {
   val totp: TotpAuth
   /** Secret string used for two-way encryption */
   val encryptionSecret: String
+  /** PasswordFactory instance */
+  val passwords: PasswordFactory
 
   implicit val self = this
 
@@ -67,14 +66,12 @@ trait UserDBO {
   def createUser(formData: SignUpForm): EmailConfirmation = {
     checkNotNull(formData, "null form data", "")
     // Create user
-    val pwdHash = hash(formData.password)
-    var user = new User(formData.copy(password = pwdHash)).copy(createdAt = Some(theTime))
+    val pwd = this.passwords.hash(formData.password)
+    var user = new User(formData.copy(password = pwd.hash), pwd.salt).copy(createdAt = Some(theTime))
     val userInsert = this.users returning this.users += user
     user = await(db.run(userInsert))
     createEmailConfirmation(user)
   }
-
-  private def hash(pwd: String) = hashpw(pwd, gensalt(this.passwordSaltLogRounds))
 
   /**
     * Deletes the pending [[EmailConfirmation]] of the specified token if it
@@ -300,7 +297,7 @@ trait UserDBO {
   def verify(username: String, password: String): Option[User] = withName(username).flatMap { user =>
     checkNotNull(username, "null username", "")
     checkNotNull(password, "null password", "")
-    if (checkpw(password, user.password))
+    if (this.passwords.check(password, user.password, user.salt))
       Some(user)
     else
       None
@@ -356,8 +353,9 @@ trait UserDBO {
     checkNotNull(newPassword, "null password", "")
     getPasswordReset(token).exists { model =>
       val user = model.user
-      val updateStatement = for { u <- this.users if u.id === user.id.get } yield u.password
-      await(db.run(updateStatement.update(hash(newPassword))))
+      val updateStatement = for { u <- this.users if u.id === user.id.get } yield (u.password, u.salt)
+      val pwd = this.passwords.hash(newPassword)
+      await(db.run(updateStatement.update(pwd.hash, pwd.salt)))
       deletePasswordReset(user)
       true
     }
@@ -414,10 +412,10 @@ trait UserDBO {
 
 final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
                                   config: SpongeAuthConfig,
+                                  override val passwords: PasswordFactory,
                                   override val totp: TotpAuth) extends UserDBO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
-  override val passwordSaltLogRounds = this.config.security.getInt("password.saltLogRounds").get
   override val timeout = this.config.db.getLong("timeout").get.millis
   override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get

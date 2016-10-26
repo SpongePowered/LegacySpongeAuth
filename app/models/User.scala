@@ -24,30 +24,21 @@ case class User(id: Option[Int] = None,
                 isEmailConfirmed: Boolean = false,
                 username: String,
                 password: String,
+                salt: String,
                 mcUsername: Option[String] = None,
                 ircNick: Option[String] = None,
                 ghUsername: Option[String] = None,
                 totpSecret: Option[String] = None,
                 isTotpConfirmed: Boolean = false) {
 
-  def this(email: String, username: String, password: String, mcUsername: String, ircNick: String,
-           ghUsername: String) = {
-    this(
-      email = email,
-      username = username,
-      password = password,
-      mcUsername = Option(mcUsername),
-      ircNick = Option(ircNick),
-      ghUsername = Option(ghUsername))
-  }
-
-  def this(formData: SignUpForm) = this(
-    formData.email,
-    formData.username,
-    formData.password,
-    formData.mcUsername.orNull,
-    formData.ircNick.orNull,
-    formData.ghUsername.orNull
+  def this(formData: SignUpForm, salt: String) = this(
+    email = formData.email,
+    username = formData.username,
+    password = formData.password,
+    salt = salt,
+    mcUsername = formData.mcUsername,
+    ircNick = formData.ircNick,
+    ghUsername = formData.ghUsername
   )
 
 }

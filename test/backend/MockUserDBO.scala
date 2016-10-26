@@ -6,7 +6,7 @@ import db.UserDBO
 import models.User
 import play.api.db.slick.DatabaseConfigProvider
 import play.db.NamedDatabase
-import security.sso.SpongeAuthConfig
+import security.SpongeAuthConfig
 import security.totp.TotpAuth
 import slick.driver.JdbcProfile
 
