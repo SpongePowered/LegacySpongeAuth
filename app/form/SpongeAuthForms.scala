@@ -20,8 +20,8 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     * The form submitted upon log in.
     */
   lazy val LogIn = Form(mapping(
-    "username" -> username,
-    "password" -> password
+    "username" -> nonEmptyText,
+    "password" -> nonEmptyText
   )(LogInForm.apply)(LogInForm.unapply))
 
   /**
