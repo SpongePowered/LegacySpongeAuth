@@ -4,6 +4,7 @@ import psycopg2
 import psycopg2.extras
 import getpass
 import sys
+from datetime import datetime
 
 # Connect to our input database
 dbIn = input("Input database: ")
@@ -35,6 +36,29 @@ print("Connection established.")
 curIn = connIn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 curIn.execute("SELECT * from users WHERE username != 'system';")
 users = curIn.fetchall()
-print("Importing %d users..." % len(users))
-for user in users:
-    pass
+curIn.close()
+connIn.close()
+
+importStmt = "INSERT INTO users (created_at, email, username, password, salt, is_admin) VALUES \n"
+values = "('%s', '%s', '%s', '%s', '%s', %s)"
+usersLen = len(users)
+
+print("Importing %d users..." % usersLen)
+for i, user in enumerate(users):
+    username = user['username']
+    email = user['email']
+    password = user['password_hash']
+    salt = user['salt']
+    admin = user['admin']
+    importStmt += values % (datetime.now(), email, username, password, salt, admin)
+    if (i < usersLen - 1):
+        importStmt += ',\n'
+
+importStmt += ';'
+print(importStmt)
+curOut = connOut.cursor()
+curOut.execute(importStmt)
+connOut.commit()
+
+curOut.close()
+connOut.close()

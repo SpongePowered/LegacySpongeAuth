@@ -14,13 +14,14 @@ final class UserTable(tag: Tag) extends Table[User](tag, "users") {
   def username          = column[String]("username")
   def password          = column[String]("password")
   def salt              = column[String]("salt")
+  def isAdmin           = column[Boolean]("is_admin")
   def mcUsername        = column[String]("mc_username")
   def ircNick           = column[String]("irc_nick")
   def ghUsername        = column[String]("gh_username")
   def totpSecret        = column[String]("totp_secret")
   def isTotpConfirmed   = column[Boolean]("is_totp_confirmed")
 
-  override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, password, salt, mcUsername.?, ircNick.?,
-                    ghUsername.?, totpSecret.?, isTotpConfirmed) <> (User.tupled, User.unapply)
+  override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, password, salt, isAdmin, mcUsername.?,
+                    ircNick.?, ghUsername.?, totpSecret.?, isTotpConfirmed) <> (User.tupled, User.unapply)
 
 }
