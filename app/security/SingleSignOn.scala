@@ -1,4 +1,4 @@
-package security.sso
+package security
 
 import java.net.{URLDecoder, URLEncoder}
 import java.util.{Base64, UUID}

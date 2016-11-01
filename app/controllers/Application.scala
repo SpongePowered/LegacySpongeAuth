@@ -11,7 +11,7 @@ import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import security.SpongeAuthConfig
-import security.sso.SingleSignOn
+import security.SingleSignOn
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 

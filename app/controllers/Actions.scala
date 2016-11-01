@@ -8,7 +8,7 @@ import play.api.data.Form
 import play.api.mvc.Results._
 import play.api.mvc._
 import security.SpongeAuthConfig
-import security.sso.SingleSignOn
+import security.SingleSignOn
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
