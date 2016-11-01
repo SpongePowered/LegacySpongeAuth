@@ -87,8 +87,8 @@ class SingleSignOn private (secret: String,
       s"&username=${user.username}"
 
     user.mcUsername.foreach(mcUsername => newPayload += s"&custom.user_field_1=$mcUsername")
-    user.ircNick.foreach(ircNick => newPayload += s"&custom.user_field_2=$ircNick")
-    user.ghUsername.foreach(ghUsername => newPayload += s"&custom.user_field_3=$ghUsername")
+    user.ghUsername.foreach(ghUsername => newPayload += s"&custom.user_field_2=$ghUsername")
+    user.ircNick.foreach(ircNick => newPayload += s"&custom.user_field_3=$ircNick")
 
     newPayload = new String(Base64.getEncoder.encode(newPayload.getBytes(this.CharEncoding)))
     val urlEncodedPayload = URLEncoder.encode(newPayload, this.CharEncoding)
