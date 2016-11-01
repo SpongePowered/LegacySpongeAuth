@@ -36,8 +36,8 @@ trait PasswordFactory {
     * @return    Hashed password
     */
   def hash(pwd: String): Password = {
-    val salt = generateSalt()
-    val hash = pbkdf2(pwd, salt)
+    val salt = encodeHex(generateSalt())
+    val hash = encodeHex(pbkdf2(pwd, salt.getBytes(Charset)))
     Password(hash, salt)
   }
 
@@ -51,20 +51,19 @@ trait PasswordFactory {
     * @return     True if verified
     */
   def check(pwd: String, hash: String, salt: String): Boolean = {
-    val check = pbkdf2(pwd, salt)
+    val check = encodeHex(pbkdf2(pwd, salt.getBytes(Charset)))
     check.equals(hash)
   }
 
   private def generateSalt() = {
     val salt = new Array[Byte](SaltBytes)
     Random.nextBytes(salt)
-    encodeHex(salt)
+    salt
   }
 
-  private def pbkdf2(pwd: String, salt: String): String = {
-    val keySpec = new PBEKeySpec(pwd.toCharArray, salt.getBytes(Charset), this.iterations, KeyLength)
-    val hash = SecretKeyFactory.getInstance(this.algo).generateSecret(keySpec).getEncoded
-    encodeHex(hash)
+  private def pbkdf2(pwd: String, salt: Array[Byte]) = {
+    val keySpec = new PBEKeySpec(pwd.toCharArray, salt, this.iterations, KeyLength)
+    SecretKeyFactory.getInstance(this.algo).generateSecret(keySpec).getEncoded
   }
 
   private def encodeHex(data: Array[Byte]) = new String(Hex.encode(data), Charset)
