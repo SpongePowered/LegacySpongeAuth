@@ -85,7 +85,7 @@ class SSOConsumer {
     if (externalId == -1 || username == null || email == null)
       return None
 
-    Some(User(id = Some(externalId), email = email, username = username, password = null))
+    Some(User(id = Some(externalId), email = email, username = username, password = null, salt = null))
   }
 
   protected def nonce: String = new BigInteger(130, Random).toString(32)

@@ -6,7 +6,7 @@ import db.UserDBO
 import models.User
 import play.api.db.slick.DatabaseConfigProvider
 import play.db.NamedDatabase
-import security.SpongeAuthConfig
+import security.{PasswordFactory, SpongeAuthConfig}
 import security.totp.TotpAuth
 import slick.driver.JdbcProfile
 
@@ -19,7 +19,7 @@ final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfi
   override val maxEmailConfirmationAge: Long = 10000
   override val maxPasswordResetAge: Long = 10000
   override val encryptionSecret = this.config.play.getString("crypto.secret").get
-
+  override val passwords: PasswordFactory = new PasswordFactory {}
 }
 
 object MockUserDBO {
@@ -31,5 +31,6 @@ object MockUserDBO {
 object FakeUser extends User(
   email = "spongie@spongepowered.org",
   username = "Spongie",
-  password = "wubalubadubdub"
+  password = "wubalubadubdub",
+  salt = ""
 )
