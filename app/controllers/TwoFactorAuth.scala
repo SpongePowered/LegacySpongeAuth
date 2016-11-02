@@ -51,7 +51,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
       val qrCode = this.qrRenderer.render(uri, qrWidth, qrHeight)
 
       // Show user result
-      Ok(views.html.tfa.setup(qrCode))
+      Ok(views.html.tfa.setup(qrCode, secret))
     }
   }
 

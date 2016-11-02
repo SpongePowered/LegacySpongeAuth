@@ -82,5 +82,7 @@ email.signature = Best regards,<br/>SpongePowered
 2fa.verify.lost = Lost your phone? <a href="#">Contact support</a> to regain access to your account.
 2fa.code.title = Enter your generated code
 2fa.code.submit = Verify
-2fa.code.info = Having trouble? <a href="#">Enter your code manually instead.</a>
+2fa.code.info = Having trouble? <a href="#" data-toggle="modal" data-target="#modal-totp-secret">Enter your code manually instead.</a>
 2fa.code.invalid = The code you entered was incorrect. Please try again.
+2fa.secret.modal.title = TOTP Secret Code
+2fa.secret.modal.body = Here is your secret code:
