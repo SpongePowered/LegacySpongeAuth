@@ -226,6 +226,20 @@ trait UserDBO {
   }
 
   /**
+    * Increments the specified [[User]]'s failedTotpAttempts field by one.
+    *
+    * @param user User to update
+    * @return     Updated user
+    */
+  def addFailedTotpAttempt(user: User): User = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    val query = for { u <- this.users if u.id === user.id.get } yield u.failedTotpAttempts
+    await(db.run(query.update(user.failedTotpAttempts + 1)))
+    get(user.id.get).get
+  }
+
+  /**
     * Returns the currently authenticated [[User]], if any.
     *
     * @param request  Request of user

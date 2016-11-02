@@ -26,7 +26,7 @@ trait Constraints {
   val username = nonEmptyText(
     minLength = getInt("username.minLen").get,
     maxLength = getInt("username.maxLen").get
-  ) verifying("error.malformed", _.matches(this.usernameRegex))
+  ) verifying("error.malformed", _.matches(this.usernameRegex)) unique(_.username)
 
   val password = nonEmptyText(
     minLength = getInt("password.minLen").get,

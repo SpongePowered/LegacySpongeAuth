@@ -29,7 +29,7 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     */
   lazy val SignUp = Form(mapping(
     "email" -> email.unique(_.email),
-    "username" -> username.unique(_.username),
+    "username" -> username,
     "password" -> password,
     "2fa" -> optional(boolean),
     "mc-username" -> minecraftUsername,

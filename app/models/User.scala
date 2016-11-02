@@ -30,7 +30,8 @@ case class User(id: Option[Int] = None,
                 ircNick: Option[String] = None,
                 ghUsername: Option[String] = None,
                 totpSecret: Option[String] = None,
-                isTotpConfirmed: Boolean = false) {
+                isTotpConfirmed: Boolean = false,
+                failedTotpAttempts: Int = 0) {
 
   def this(formData: SignUpForm, salt: String) = this(
     email = formData.email,

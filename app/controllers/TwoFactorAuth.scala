@@ -83,7 +83,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     * @return Verification page
     */
   def showVerification() = WithSession { implicit request =>
-    Ok(views.html.tfa.verify())
+    Ok(views.html.tfa.verify(request.userSession.user))
   }
 
   /**
@@ -95,18 +95,25 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     */
   def verifyTotp() = WithSession { implicit request =>
     val session = request.userSession
-    val user = session.user
-    this.forms.VerifyTotp.bindFromRequest().fold(
-      hasErrors =>
-        FormError(TwoFactorAuth.showVerification(), hasErrors),
-      code => {
-        if (user.isTotpConfirmed && user.totpSecret.isDefined && this.users.verifyTotp(user, code)) {
-          this.users.setSessionAuthenticated(session)
-          Redirect(Application.showHome())
-        } else
-          Redirect(TwoFactorAuth.showVerification()).withError("2fa.code.invalid")
-      }
-    )
+    var user = session.user
+    val maxAttempts = this.config.security.getInt("totp.maxAttempts").get
+    if (user.failedTotpAttempts >= maxAttempts)
+      BadRequest
+    else {
+      this.forms.VerifyTotp.bindFromRequest().fold(
+        hasErrors =>
+          FormError(TwoFactorAuth.showVerification(), hasErrors),
+        code => {
+          if (user.isTotpConfirmed && user.totpSecret.isDefined && this.users.verifyTotp(user, code)) {
+            this.users.setSessionAuthenticated(session)
+            Redirect(Application.showHome())
+          } else {
+            user = this.users.addFailedTotpAttempt(user)
+            Redirect(TwoFactorAuth.showVerification()).withError("2fa.code.invalid")
+          }
+        }
+      )
+    }
   }
 
 }

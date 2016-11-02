@@ -1,6 +1,7 @@
-@import controllers.routes.TwoFactorAuth
 @import security.SpongeAuthConfig
-@()(implicit messages: Messages, config: SpongeAuthConfig, request: Request[_], flash: Flash)
+@import controllers.routes.Application
+@import controllers.routes.TwoFactorAuth
+@(user: User)(implicit messages: Messages, config: SpongeAuthConfig, request: Request[_], flash: Flash)
 
 @bootstrap.layout(messages("2fa.verify.title")) {
 
@@ -14,8 +15,17 @@
 
                     <div class="panel-body">
                         @utils.alert("error")
-                        <p>@messages("2fa.verify.info")</p>
-                        @tfa.form(TwoFactorAuth.verifyTotp(), "2fa.verify.lost")
+                        @if(user.failedTotpAttempts >= config.security.getInt("totp.maxAttempts").get) {
+                            <p>
+                                @Html(messages("2fa.verify.maxAttempts", config.sponge.getString("contact.href").get))
+                            </p>
+                            <a href="@Application.showHome()" class="btn btn-primary pull-right">
+                                @messages("general.back")
+                            </a>
+                        } else {
+                            <p>@messages("2fa.verify.info")</p>
+                            @tfa.form(TwoFactorAuth.verifyTotp(), "2fa.verify.lost")
+                        }
                     </div>
                 </div>
             </div>

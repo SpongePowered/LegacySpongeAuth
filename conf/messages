@@ -77,6 +77,7 @@ email.signature = Best regards,<br/>SpongePowered
 2fa.setup.title = Setup two-factor authentication
 2fa.setup.info = Secure your account by setting up two-factor authentication on your account with a mobile app such as Google Authenticator. Scan the QR Code below to get started.
 2fa.verify.info = Enter the generated code from your previously set up mobile app.
+2fa.verify.maxAttempts = <p>You have reached the maximum amount of failed two-factor authentication attempts and have thus been locked out of your account.</p> <p>Please <a href="{0}">contact our staff</a> to regain access to your account. We apologize for any inconvenience this may cause.</p>
 2fa.verify.title = Two-Factor Authentication
 2fa.verify.lost = Lost your phone? <a href="#">Contact support</a> to regain access to your account.
 2fa.code.title = Enter your generated code
