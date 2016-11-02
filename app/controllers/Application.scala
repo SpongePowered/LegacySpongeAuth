@@ -124,14 +124,10 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
             Redirect(errorRedirect).flashing("error" -> "error.verify.user")
           case Some(user) =>
             // Success, check if the user has 2FA enabled
-            user.totpSecret match {
-              case None =>
-                // Nope
-                Redirect(Application.showHome()).authenticatedAs(user)
-              case Some(encSecret) =>
-                // Yup, have them verify
-                Redirect(TwoFactorAuth.showVerification()).remembering(user)
-            }
+            if (!user.isTotpConfirmed)
+              Redirect(Application.showHome()).authenticatedAs(user)
+            else
+              Redirect(TwoFactorAuth.showVerification()).remembering(user)
         }
       }
     )

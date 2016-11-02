@@ -52,7 +52,7 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     * The form submitted to send an email where a user can reset their
     * password.
     */
-  lazy val SendPasswordReset = Form(single("username" -> username))
+  lazy val SendPasswordReset = Form(single("username" -> nonEmptyText))
 
   /**
     * The form submitted to reset a user's password.

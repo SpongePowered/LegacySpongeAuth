@@ -37,7 +37,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
   def showSetup() = WithSession { implicit request =>
     val user = request.userSession.user
     if (user.isTotpConfirmed)
-      BadRequest
+      Redirect(Application.showHome())
     else {
       // Generate a URI for the OTP auth
       val encSecret = user.totpSecret.getOrElse(this.users.generateTotpSecret(user).totpSecret.get)
@@ -83,7 +83,11 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     * @return Verification page
     */
   def showVerification() = WithSession { implicit request =>
-    Ok(views.html.tfa.verify(request.userSession.user))
+    val user = request.userSession.user
+    if (!user.isTotpConfirmed)
+      Redirect(Application.showHome())
+    else
+      Ok(views.html.tfa.verify(request.userSession.user))
   }
 
   /**
