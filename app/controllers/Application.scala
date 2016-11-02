@@ -288,7 +288,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     * @return     BadRequest if SSO request is missing or has an invalid
     *             signature, verification form otherwise
     */
-  def showVerification(sso: Option[String], sig: Option[String]) = Action { implicit request =>
+  def showVerification(sso: Option[String], sig: Option[String]) = Authenticated { implicit request =>
     SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
       case None =>
         // SSO request required
@@ -305,30 +305,32 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     * @return BadRequest if no SSO request is present, redirect to SSO origin
     *         otherwise
     */
-  def verify() = Action { implicit request =>
+  def verify() = Authenticated { implicit request =>
     SingleSignOn.bindFromRequest() match {
       case None =>
         // SSO required
         BadRequest
       case Some(so) =>
         // Validate log in form
+        val failCall = Application.showVerification(Some(so.payload), Some(so.sig))
         this.forms.LogIn.bindFromRequest().fold(
           hasErrors => {
             // User error
             val firstError = hasErrors.errors.head
-            val call = Application.showVerification(Some(so.payload), Some(so.sig))
-            Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
+            Redirect(failCall).flashing("error" -> (firstError.message + '.' + firstError.key))
           },
           formData => {
             // Verify username and password
             this.users.verify(formData.username, formData.password) match {
               case None =>
                 // Verification failed
-                val call = Application.showVerification(Some(so.payload), Some(so.sig))
-                Redirect(call).flashing("error" -> "error.verify.user")
+                Redirect(failCall).flashing("error" -> "error.verify.user")
               case Some(user) =>
-                // Redirect directly back to SSO origin
-                Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
+                if (user.username.equals(request.user.username)) {
+                  // Redirect directly back to SSO origin
+                  Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
+                } else
+                  Redirect(failCall).flashing("error" -> "error.verify.user")
             }
           }
         )

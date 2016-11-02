@@ -13,6 +13,7 @@ general.about           =   About
 general.sponsors        =   Sponsors
 general.back            =   Back
 general.submit          =   Submit
+general.continue        =   Continue
 
 error.minLength.password    =   Password too short.
 error.maxLength.password    =   Password too long.
@@ -57,6 +58,8 @@ login.password.forgot.info = Enter the username you signed up with to receive an
 
 login.title = Log in
 login.password.forgot.sent.info = Check your email. We sent you a link where you can finish resetting your password.
+
+verify.title = Verify your username and password
 
 home.title      =   Sponge Authentication Portal
 home.info       =   You are currently logged in as {0}.
