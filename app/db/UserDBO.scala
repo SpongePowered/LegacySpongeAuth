@@ -8,9 +8,9 @@ import com.google.common.base.Preconditions._
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable, UserTable}
 import form.SignUpForm
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
+import org.spongepowered.play.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
-import security.CryptoUtils._
 import security.{PasswordFactory, SpongeAuthConfig}
 import security.totp.TotpAuth
 import slick.backend.DatabaseConfig

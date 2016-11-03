@@ -10,16 +10,16 @@ libraryDependencies ++= Seq(cache, ws, specs2 % Test)
 
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
 
-resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+resolvers ++= Seq(
+  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+)
 
 routesGenerator := InjectedRoutesGenerator
 
 libraryDependencies ++= Seq(
+  "org.spongepowered"       %%  "sponge-play"             %   "1.0.0-SNAPSHOT",
   "com.typesafe.play"       %%  "play-slick"              %   "2.0.0",
   "com.typesafe.play"       %%  "play-slick-evolutions"   %   "2.0.0",
   "org.postgresql"          %   "postgresql"              %   "9.4.1208.jre7",
-  "com.github.tminglei"     %%  "slick-pg"                %   "0.12.0",
-  "org.mindrot"             %   "jbcrypt"                 %   "0.3m",
-  "javax.mail"              %   "mail"                    %   "1.4.7",
   "com.google.zxing"        %   "core"                    %   "3.3.0"
 )

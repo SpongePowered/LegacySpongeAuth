@@ -4,10 +4,10 @@ import java.net.{URLDecoder, URLEncoder}
 import java.util.{Base64, UUID}
 
 import models.User
+import org.spongepowered.play.CryptoUtils._
 import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.mvc.{Cookie, Request, Result, Session}
-import security.CryptoUtils.hmac_sha256
 
 import scala.concurrent.duration.Duration
 

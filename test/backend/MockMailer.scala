@@ -3,7 +3,7 @@ package backend
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
-import mail.{Email, Mailer}
+import org.spongepowered.play.mail.{Email, Mailer}
 
 import scala.concurrent.duration._
 

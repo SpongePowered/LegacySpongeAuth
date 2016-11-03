@@ -3,6 +3,7 @@ package mail
 import javax.inject.Inject
 
 import models.{EmailConfirmation, PasswordReset}
+import org.spongepowered.play.mail.Email
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Request
 import security.SpongeAuthConfig

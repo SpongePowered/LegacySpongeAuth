@@ -4,9 +4,10 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
-import external.StatusZ
 import form.SpongeAuthForms
-import mail.{Emails, Mailer}
+import mail.Emails
+import org.spongepowered.play.StatusZ
+import org.spongepowered.play.mail.Mailer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
