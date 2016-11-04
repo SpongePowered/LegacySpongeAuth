@@ -73,8 +73,8 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         FormError(Application.showSignUp(None, None), hasErrors),
       formData => {
         // Create the user and send confirmation email
-        val confirmation = this.users.createUser(formData)
-        val user = confirmation.user
+        val user = this.users.createUser(formData)
+        val confirmation = this.users.createEmailConfirmation(user)
         this.mailer.push(this.emails.confirmation(confirmation))
         if (formData.setup2fa)
           Redirect(TwoFactorAuth.showSetup()).remembering(user)

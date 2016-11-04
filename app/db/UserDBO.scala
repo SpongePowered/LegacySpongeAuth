@@ -66,14 +66,13 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: TSignUpForm): EmailConfirmation = {
+  def createUser(formData: TSignUpForm, verified: Boolean = false): User = {
     checkNotNull(formData, "null form data", "")
     // Create user
     val pwd = this.passwords.hash(formData.password)
-    var user = new User(formData, pwd).copy(createdAt = Some(theTime))
-    val userInsert = this.users returning this.users += user
-    user = await(db.run(userInsert))
-    createEmailConfirmation(user)
+    var user = new User(formData, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
+    val insertion = this.users returning this.users += user
+    await(db run insertion)
   }
 
   /**

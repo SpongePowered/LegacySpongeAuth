@@ -74,6 +74,7 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
       "mc-username" -> minecraftUsername,
       "irc-nick" -> ircNick,
       "gh-username" -> gitHubUsername,
+      "verified" -> optional(boolean),
       "api-key" -> apiKey
     )(CreateUserForm.apply)(CreateUserForm.unapply))
 

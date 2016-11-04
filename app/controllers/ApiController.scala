@@ -5,6 +5,8 @@ import javax.inject.Inject
 import api.SpongeAuthWrites
 import db.UserDBO
 import form.SpongeAuthForms
+import mail.Emails
+import org.spongepowered.play.mail.Mailer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json._
@@ -15,6 +17,8 @@ import security.SpongeAuthConfig
   * Handles all API endpoints in the applicaiton.
   */
 final class ApiController @Inject()(forms: SpongeAuthForms,
+                                    emails: Emails,
+                                    mailer: Mailer,
                                     override implicit val users: UserDBO,
                                     override val config: SpongeAuthConfig,
                                     override val cache: CacheApi,
@@ -33,7 +37,13 @@ final class ApiController @Inject()(forms: SpongeAuthForms,
         Ok(obj("error" -> this.messagesApi(firstError.message + '.' + firstError.key)))
       },
       formData => {
-        Ok(toJson(this.users.createUser(formData).user))
+        val verified = formData.isVerified
+        val user = this.users.createUser(formData, verified = verified)
+        if (!verified) {
+          val confirmation = this.users.createEmailConfirmation(user)
+          this.mailer.push(this.emails.confirmation(confirmation))
+        }
+        Ok(toJson(user))
       }
     )
   }

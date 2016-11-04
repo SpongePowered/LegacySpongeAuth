@@ -8,4 +8,9 @@ case class CreateUserForm(override val email: String,
                           override val mcUsername: Option[String],
                           override val ircNick: Option[String],
                           override val ghUsername: Option[String],
-                          apiKey: String) extends TSignUpForm
+                          private val _isVerified: Option[Boolean],
+                          apiKey: String) extends TSignUpForm {
+
+  def isVerified: Boolean = this._isVerified.getOrElse(false)
+
+}
