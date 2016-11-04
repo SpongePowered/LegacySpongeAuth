@@ -9,12 +9,12 @@ import play.api.mvc.{Request, WrappedRequest}
 trait Requests {
 
   /**
-    * Represents a request that has been authenticated.
+    * Represents a request with a user in it.
     *
-    * @param user     Authenticated user
+    * @param user     User
     * @param request  Original request
     */
-  case class AuthRequest[A](user: User, request: Request[A]) extends WrappedRequest[A](request)
+  case class UserRequest[A](user: User, request: Request[A]) extends WrappedRequest[A](request)
 
   /**
     * Represents a request that contains a [[Session]].

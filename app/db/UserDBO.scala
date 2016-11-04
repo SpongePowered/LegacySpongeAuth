@@ -5,13 +5,15 @@ import java.util.{Date, UUID}
 import javax.inject.Inject
 
 import com.google.common.base.Preconditions._
-import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable, UserTable}
-import form.SignUpForm
+import db.schema.user.{DeletedUserTable, UserTable}
+import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
+import form.{SignUpForm, TSignUpForm}
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
 import org.spongepowered.play.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
-import security.{PasswordFactory, SpongeAuthConfig}
+import security.SpongeAuthConfig
+import security.pwd.PasswordFactory
 import security.totp.TotpAuth
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
@@ -29,6 +31,7 @@ trait UserDBO {
 
   val dbConfig: DatabaseConfig[JdbcProfile]
   val users = TableQuery[UserTable]
+  val deletedUsers = TableQuery[DeletedUserTable]
   val sessions = TableQuery[SessionTable]
   val emailConfirms = TableQuery[EmailConfirmationTable]
   val passwordResets = TableQuery[PasswordResetTable]
@@ -63,14 +66,37 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: SignUpForm): EmailConfirmation = {
+  def createUser(formData: TSignUpForm): EmailConfirmation = {
     checkNotNull(formData, "null form data", "")
     // Create user
     val pwd = this.passwords.hash(formData.password)
-    var user = new User(formData.copy(password = pwd.hash), pwd.salt).copy(createdAt = Some(theTime))
+    var user = new User(formData, pwd).copy(createdAt = Some(theTime))
     val userInsert = this.users returning this.users += user
     user = await(db.run(userInsert))
     createEmailConfirmation(user)
+  }
+
+  /**
+    * Inserts the specified [[User]] into the deleted users table and deletes
+    * it from the regular user table.
+    *
+    * @param user User to delete
+    * @return     Deleted user
+    */
+  def deleteUser(user: User): User = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    var deletedUser = user.copy(deletedAt = Some(theTime))
+    val insertion = this.deletedUsers returning this.deletedUsers += deletedUser
+    deletedUser = await(db run insertion)
+
+    await(db run this.sessions.filter(_.username === user.username).delete)
+    await(db run this.emailConfirms.filter(_.email === user.email).delete)
+    await(db run this.passwordResets.filter(_.email === user.email).delete)
+
+    val deletion = this.users.filter(_.id === user.id.get).delete
+    await(db run deletion)
+    deletedUser
   }
 
   /**
@@ -378,7 +404,12 @@ trait UserDBO {
   /**
     * Removes all [[User]]s from the database.
     */
-  def removeAll() = await(db.run(this.users.delete))
+  def removeAll() = {
+    val users = await(db run this.users.result)
+    for (user <- users)
+      deleteUser(user)
+    await(db run this.deletedUsers.delete)
+  }
 
   /**
     * Returns the [[User]] with the specified ID, if any.

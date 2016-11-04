@@ -1,4 +1,4 @@
-package security
+package security.pwd
 
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
@@ -6,6 +6,7 @@ import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
 
 import org.apache.commons.codec.binary.Hex
+import security.SpongeAuthConfig
 
 /**
   * Handles password creation and validation within the application.
@@ -20,14 +21,6 @@ trait PasswordFactory {
 
   val algo = "PBKDF2WithHmacSHA256"
   val iterations = 64000
-
-  /**
-    * Represents a hashed password.
-    *
-    * @param hash Password hash
-    * @param salt Password salt
-    */
-  case class Password(hash: String, salt: String)
 
   /**
     * Hashes the specified clear text password.

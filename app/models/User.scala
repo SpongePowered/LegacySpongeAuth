@@ -2,7 +2,8 @@ package models
 
 import java.sql.Timestamp
 
-import form.SignUpForm
+import form.TSignUpForm
+import security.pwd.Password
 
 /**
   * Represents a Sponge user.
@@ -31,13 +32,14 @@ case class User(id: Option[Int] = None,
                 ghUsername: Option[String] = None,
                 totpSecret: Option[String] = None,
                 isTotpConfirmed: Boolean = false,
-                failedTotpAttempts: Int = 0) {
+                failedTotpAttempts: Int = 0,
+                deletedAt: Option[Timestamp] = None) {
 
-  def this(formData: SignUpForm, salt: String) = this(
+  def this(formData: TSignUpForm, pwd: Password) = this(
     email = formData.email,
     username = formData.username,
-    password = formData.password,
-    salt = salt,
+    password = pwd.hash,
+    salt = pwd.salt,
     mcUsername = formData.mcUsername,
     ircNick = formData.ircNick,
     ghUsername = formData.ghUsername

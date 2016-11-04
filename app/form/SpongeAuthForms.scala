@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import db.UserDBO
 import external.{GitHubApi, MojangApi}
+import form.api.CreateUserForm
 import play.api.data.Form
 import play.api.data.Forms._
 import security.SpongeAuthConfig
@@ -15,6 +16,8 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
                                       override val users: UserDBO,
                                       override val mojang: MojangApi,
                                       override val gitHub: GitHubApi) extends Constraints {
+
+  val Api = new Api
 
   /**
     * The form submitted upon log in.
@@ -33,7 +36,7 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     "password" -> password,
     "2fa" -> optional(boolean),
     "mc-username" -> minecraftUsername,
-    "irc-nick" -> optional(nonEmptyText).unique(_.ircNick),
+    "irc-nick" -> ircNick,
     "gh-username" -> gitHubUsername
   )(SignUpForm.apply)(SignUpForm.unapply))
 
@@ -58,5 +61,22 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     * The form submitted to reset a user's password.
     */
   lazy val ResetPassword = Form(single("password" -> password))
+
+  final class Api {
+
+    /**
+      * The form data submitted to create a new user via the API
+      */
+    lazy val CreateUser = Form(mapping(
+      "email" -> email.unique(_.email),
+      "username" -> username,
+      "password" -> password,
+      "mc-username" -> minecraftUsername,
+      "irc-nick" -> ircNick,
+      "gh-username" -> gitHubUsername,
+      "api-key" -> apiKey
+    )(CreateUserForm.apply)(CreateUserForm.unapply))
+
+  }
 
 }

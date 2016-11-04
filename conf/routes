@@ -1,5 +1,8 @@
 GET     /                           @controllers.Application.showHome()
 
+POST    /api/users                  @controllers.ApiController.createUser()
+DELETE  /api/users                  @controllers.ApiController.deleteUser(username, apiKey)
+
 GET     /signup                     @controllers.Application.showSignUp(sso: Option[String], sig: Option[String])
 POST    /signup                     @controllers.Application.signUp()
 

@@ -1,7 +1,7 @@
 import org.junit.runner._
 import org.specs2.mutable._
 import org.specs2.runner._
-import security.PasswordFactory
+import security.pwd.PasswordFactory
 
 @RunWith(classOf[JUnitRunner])
 class PasswordFactorySpec extends Specification {

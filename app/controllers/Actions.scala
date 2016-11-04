@@ -24,7 +24,7 @@ trait Actions extends Requests with ActionHelpers {
   implicit val cache: CacheApi
 
   /** Ensures a request is not authenticated */
-  def SSORedirect(sso: Option[String], sig: Option[String]) = Action andThen notAuthActon(sso, sig)
+  def SSORedirect(sso: Option[String], sig: Option[String]) = Action andThen notAuthAction(sso, sig)
 
   def NotAuthenticated = SSORedirect(None, None)
 
@@ -36,6 +36,12 @@ trait Actions extends Requests with ActionHelpers {
 
   /** Called when a user is not authorized to visit some page */
   def onUnauthorized(request: Request[_]) = Redirect(routes.Application.showLogIn(None, None))
+
+  /** Ensures the request has a valid API key. */
+  def ApiAction(apiKey: String) = Action andThen apiAction(apiKey)
+
+  /** Looks up a user and returns NotFound if not found. */
+  def WithUser(username: String) = withUser(username)
 
   /**
     * An implicit wrapper for a Result to provide some added functionality.
@@ -79,7 +85,24 @@ trait Actions extends Requests with ActionHelpers {
 
   // Action impl
 
-  private def notAuthActon(sso: Option[String], sig: Option[String]) = new ActionFilter[Request] {
+  private def withUser(username: String) = new ActionRefiner[Request, UserRequest] {
+    def refine[A](request: Request[A]): Future[Either[Result, UserRequest[A]]] = Future.successful {
+      Actions.this.users.withName(username)
+        .map(UserRequest(_, request))
+        .toRight(NotFound)
+    }
+  }
+
+  private def apiAction(apiKey: String) = new ActionFilter[Request] {
+    def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful {
+      if (apiKey.equals(Actions.this.config.security.getString("api.key").get))
+        None
+      else
+        Some(Unauthorized)
+    }
+  }
+
+  private def notAuthAction(sso: Option[String], sig: Option[String]) = new ActionFilter[Request] {
     def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful {
       val signOn = SingleSignOn.parseValidateAndCache(
         secret = Actions.this.ssoSecret,
@@ -92,10 +115,10 @@ trait Actions extends Requests with ActionHelpers {
     }
   }
 
-  private def authAction = new ActionRefiner[Request, AuthRequest] {
-    def refine[A](request: Request[A]): Future[Either[Result, AuthRequest[A]]] = Future.successful {
+  private def authAction = new ActionRefiner[Request, UserRequest] {
+    def refine[A](request: Request[A]): Future[Either[Result, UserRequest[A]]] = Future.successful {
       Actions.this.users.current(request)
-        .map(AuthRequest(_, request))
+        .map(UserRequest(_, request))
         .toRight(onUnauthorized(request))
     }
   }

@@ -1,7 +1,7 @@
 package form
 
 import db.UserDBO
-import db.schema.UserTable
+import db.schema.user.UserTable
 import external.{GitHubApi, MojangApi}
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -18,7 +18,7 @@ trait Constraints {
   val mojang: MojangApi
   val gitHub: GitHubApi
 
-  import config.security.getInt
+  import config.security.{getInt, getString}
   import users.isFieldUnique
 
   val usernameRegex = "^\\S*$"
@@ -42,6 +42,10 @@ trait Constraints {
   val gitHubUsername = optional(
     nonEmptyText verifying("error.notFound", this.gitHub.getUser(_).isDefined)
   ).unique(_.ghUsername)
+
+  val ircNick = optional(nonEmptyText).unique(_.ircNick)
+
+  val apiKey = nonEmptyText verifying("error.invalidKey", _.equals(getString("api.key").get))
 
   /**
     * A wrapper for a String [[Mapping]].
