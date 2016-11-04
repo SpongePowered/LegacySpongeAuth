@@ -1,14 +1,12 @@
 package controllers
 
-import com.google.common.base.Preconditions._
 import db.UserDBO
 import models.{User, Session => DbSession}
+import org.spongepowered.play.ActionHelpers
 import play.api.cache.CacheApi
-import play.api.data.Form
 import play.api.mvc.Results._
 import play.api.mvc._
-import security.SpongeAuthConfig
-import security.SingleSignOn
+import security.{SingleSignOn, SpongeAuthConfig}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -16,7 +14,7 @@ import scala.concurrent.duration._
 /**
   * A collection of custom actions used by the application.
   */
-trait Actions extends Requests {
+trait Actions extends Requests with ActionHelpers {
 
   val users: UserDBO
   val config: SpongeAuthConfig
@@ -38,14 +36,6 @@ trait Actions extends Requests {
 
   /** Called when a user is not authorized to visit some page */
   def onUnauthorized(request: Request[_]) = Redirect(routes.Application.showLogIn(None, None))
-
-  def FormError(call: Call, form: Form[_]) = {
-    checkNotNull(call, "null call", "")
-    checkNotNull(form, "null form", "")
-    checkArgument(form.errors.nonEmpty, "no errors", "")
-    val firstError = form.errors.head
-    Redirect(call).flashing("error" -> (firstError.message + '.' + firstError.key))
-  }
 
   /**
     * An implicit wrapper for a Result to provide some added functionality.
@@ -84,22 +74,6 @@ trait Actions extends Requests {
       val cookie = this.users.createSessionCookie(session)
       result.withSession(Security.username -> session.username).withCookies(cookie)
     }
-
-    /**
-      * Adds an error message to the result.
-      *
-      * @param error  Error message
-      * @return       Result with error
-      */
-    def withError(error: String) = result.flashing("error" -> error)
-
-    /**
-      * Adds a success message to the result.
-      *
-      * @param message  Success message
-      * @return         Result with message
-      */
-    def withSuccess(message: String) = result.flashing("success" -> message)
 
   }
 
