@@ -23,7 +23,7 @@ abstract class AbstractUserTable(tag: Tag, name: String) extends Table[User](tag
   def failedTotpAttempts  = column[Int]("failed_totp_attempts")
   def deletedAt           = column[Timestamp]("deleted_at")
 
-  override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, password, salt, isAdmin, mcUsername.?,
+  override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, password.?, salt.?, isAdmin, mcUsername.?,
                     ircNick.?, ghUsername.?, totpSecret.?, isTotpConfirmed, failedTotpAttempts,
                     deletedAt.?) <> (User.tupled, User.unapply)
 

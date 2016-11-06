@@ -38,7 +38,7 @@ final class ApiController @Inject()(forms: SpongeAuthForms,
       },
       formData => {
         val verified = formData.isVerified
-        val user = this.users.createUser(formData, verified = verified)
+        val user = this.users.createUser(formData, verified = verified, dummy = formData.isDummy)
         if (!verified) {
           val confirmation = this.users.createEmailConfirmation(user)
           this.mailer.push(this.emails.confirmation(confirmation))

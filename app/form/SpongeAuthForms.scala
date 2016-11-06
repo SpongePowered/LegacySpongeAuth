@@ -70,13 +70,16 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     lazy val CreateUser = Form(mapping(
       "email" -> email.unique(_.email),
       "username" -> username,
-      "password" -> password,
+      "password" -> default(password, null),
       "mc-username" -> minecraftUsername,
       "irc-nick" -> ircNick,
       "gh-username" -> gitHubUsername,
-      "verified" -> optional(boolean),
+      "verified" -> default(boolean, false),
+      "dummy" -> default(boolean, false),
       "api-key" -> apiKey
-    )(CreateUserForm.apply)(CreateUserForm.unapply))
+    )(CreateUserForm.apply)(CreateUserForm.unapply)
+      verifying("error.required.password", formData => formData.isDummy || formData.password != null)
+    )
 
   }
 

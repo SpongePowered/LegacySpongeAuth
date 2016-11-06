@@ -24,8 +24,8 @@ case class User(id: Option[Int] = None,
                 email: String,
                 isEmailConfirmed: Boolean = false,
                 username: String,
-                password: String,
-                salt: String,
+                password: Option[String],
+                salt: Option[String],
                 isAdmin: Boolean = false,
                 mcUsername: Option[String] = None,
                 ircNick: Option[String] = None,
@@ -35,11 +35,11 @@ case class User(id: Option[Int] = None,
                 failedTotpAttempts: Int = 0,
                 deletedAt: Option[Timestamp] = None) {
 
-  def this(formData: TSignUpForm, pwd: Password) = this(
+  def this(formData: TSignUpForm, pwd: Option[Password]) = this(
     email = formData.email,
     username = formData.username,
-    password = pwd.hash,
-    salt = pwd.salt,
+    password = pwd.map(_.hash),
+    salt = pwd.map(_.salt),
     mcUsername = formData.mcUsername,
     ircNick = formData.ircNick,
     ghUsername = formData.ghUsername

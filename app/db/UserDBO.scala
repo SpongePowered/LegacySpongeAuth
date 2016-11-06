@@ -66,10 +66,10 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: TSignUpForm, verified: Boolean = false): User = {
+  def createUser(formData: TSignUpForm, verified: Boolean = false, dummy: Boolean = false): User = {
     checkNotNull(formData, "null form data", "")
     // Create user
-    val pwd = this.passwords.hash(formData.password)
+    val pwd = if (dummy) None else Some(this.passwords.hash(formData.password))
     var user = new User(formData, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
     val insertion = this.users returning this.users += user
     await(db run insertion)
@@ -336,7 +336,7 @@ trait UserDBO {
   def verify(username: String, password: String): Option[User] = withName(username).flatMap { user =>
     checkNotNull(username, "null username", "")
     checkNotNull(password, "null password", "")
-    if (this.passwords.check(password, user.password, user.salt))
+    if (user.password.isDefined && this.passwords.check(password, user.password.get, user.salt.get))
       Some(user)
     else
       None
