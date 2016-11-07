@@ -80,6 +80,13 @@ trait UserDBO {
     await(db run stmt.update(value.orNull))
   }
 
+  /**
+    * Saves the specified settings to the specified [[User]]'s account.
+    *
+    * @param user     User to save
+    * @param formData Settings to save
+    * @return         Updated user
+    */
   def saveSettings(user: User, formData: SettingsForm): User = {
     println("saveSettings() : " + formData)
     checkNotNull(user, "null user", "")

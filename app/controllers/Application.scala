@@ -182,10 +182,20 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
+  /**
+    * Displays the user account settings page.
+    *
+    * @return User account settings
+    */
   def showSettings() = Authenticated { implicit request =>
     Ok(views.html.settings(request.user))
   }
 
+  /**
+    * Submits changes to a user's settings.
+    *
+    * @return Redirect to settings page
+    */
   def saveSettings() = Authenticated { implicit request =>
     this.forms.SaveSettings.bindFromRequest().fold(
       hasErrors =>
