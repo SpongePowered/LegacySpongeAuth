@@ -7,9 +7,9 @@ import javax.inject.Inject
 import com.google.common.base.Preconditions._
 import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
-import form.{SignUpForm, TSignUpForm}
+import form.{SettingsForm, SignUpForm, TSignUpForm}
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
-import org.spongepowered.play.CryptoUtils._
+import org.spongepowered.play.util.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
 import security.SpongeAuthConfig
@@ -73,6 +73,22 @@ trait UserDBO {
     var user = new User(formData, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
     val insertion = this.users returning this.users += user
     await(db run insertion)
+  }
+
+  private def saveSetting(user: User, rep: UserTable => Rep[String], value: Option[String]) = {
+    val stmt = for { u <- this.users if u.id === user.id.get } yield rep(u)
+    await(db run stmt.update(value.orNull))
+  }
+
+  def saveSettings(user: User, formData: SettingsForm): User = {
+    println("saveSettings() : " + formData)
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    checkNotNull(formData, "null form data", "")
+    saveSetting(user, _.mcUsername, formData.mcUsername)
+    saveSetting(user, _.ghUsername, formData.ghUsername)
+    saveSetting(user, _.ircNick, formData.ircNick)
+    get(user.id.get).get
   }
 
   /**
@@ -447,9 +463,13 @@ trait UserDBO {
     * @param value  Value to check
     * @return       True if unique
     */
-  def isFieldUnique(rep: UserTable => Rep[String], value: String): Boolean = {
+  def isFieldUnique(rep: UserTable => Rep[String], value: String, excluding: User = null): Boolean = {
     checkNotNull(rep, "null rep", "")
-    await(db.run((!this.users.filter(rep(_) === value).exists).result))
+    var filter = this.users.filter(rep(_) === value)
+    if (excluding != null)
+      filter = filter.filterNot(_.id === excluding.id.get)
+    val query = !filter.exists
+    await(db run query.result)
   }
 
 }

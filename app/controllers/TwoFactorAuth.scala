@@ -5,7 +5,7 @@ import javax.inject.Inject
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SpongeAuthForms
-import org.spongepowered.play.CryptoUtils._
+import org.spongepowered.play.util.CryptoUtils._
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Controller

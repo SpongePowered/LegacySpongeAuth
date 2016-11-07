@@ -1,6 +1,7 @@
 GET     /                           @controllers.Application.showHome()
 
 POST    /api/users                  @controllers.ApiController.createUser()
+GET     /api/users/:user            @controllers.ApiController.getUser(user, apiKey)
 DELETE  /api/users                  @controllers.ApiController.deleteUser(username, apiKey)
 
 GET     /signup                     @controllers.Application.showSignUp(sso: Option[String], sig: Option[String])
@@ -16,7 +17,7 @@ GET     /password/reset             @controllers.Application.showPasswordReset(t
 POST    /password/reset/send        @controllers.Application.sendPasswordReset()
 POST    /password/reset/:token      @controllers.Application.resetPassword(token)
 
-GET     /logout                     @controllers.Application.logOut()
+GET     /logout                     @controllers.Application.logOut(redirect: Option[String])
 
 GET     /verify                     @controllers.Application.showVerification(sso: Option[String], sig: Option[String])
 POST    /verify                     @controllers.Application.verify()
@@ -25,6 +26,9 @@ GET     /2fa/setup                  @controllers.TwoFactorAuth.showSetup()
 POST    /2fa/setup                  @controllers.TwoFactorAuth.confirmTotp()
 GET     /2fa/verify                 @controllers.TwoFactorAuth.showVerification()
 POST    /2fa/verify                 @controllers.TwoFactorAuth.verifyTotp()
+
+GET     /settings                   @controllers.Application.showSettings()
+POST    /settings                   @controllers.Application.saveSettings()
 
 GET     /statusz                    @controllers.Application.showStatusZ()
 

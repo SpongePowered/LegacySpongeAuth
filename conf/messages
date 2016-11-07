@@ -14,6 +14,8 @@ general.sponsors        =   Sponsors
 general.back            =   Back
 general.submit          =   Submit
 general.continue        =   Continue
+general.enabled         =   Enabled
+general.disabled        =   Disabled
 
 error.minLength.password    =   Password too short.
 error.maxLength.password    =   Password too long.
@@ -65,10 +67,15 @@ login.password.forgot.sent.info = Check your email. We sent you a link where you
 
 verify.title = Verify your username and password
 
-home.title      =   Sponge Authentication Portal
-home.info       =   You are currently logged in as {0}.
-home.logout     =   Log out
-home.redirect   =   Returning to original site...
+home.title          =   Sponge Authentication Portal
+home.info           =   You are currently logged in as <strong>{0}</strong>.
+home.logout         =   Log out
+home.redirect       =   Returning to original site...
+home.download       =   Download Sponge
+home.visitForums    =   Visit the forums
+home.browsePlugins  =   Browse plugins
+home.uploadPlugin   =   Upload a plugin
+home.manageAccount  =   Manage account
 
 email.confirm.title = SpongePowered
 email.confirm.message = Welcome to SpongePowered! Click the link below to confirm your new account with us.
@@ -90,3 +97,16 @@ email.signature = Best regards,<br/>SpongePowered
 2fa.code.invalid = The code you entered was incorrect. Please try again.
 2fa.secret.modal.title = TOTP Secret Code
 2fa.secret.modal.body = Here is your secret code:
+
+settings.title = Account settings
+settings.resetPassword = Reset password
+settings.save = Save changes
+
+user.email = Email
+user.username = Username
+user.joinDate = Member since
+user.mcUsername = Minecraft username
+user.ghUsername = GitHub username
+user.ircNick = IRC Nick
+user.2fa = Two-Factor Authentication
+user.password = Password

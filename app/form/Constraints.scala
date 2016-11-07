@@ -37,13 +37,13 @@ trait Constraints {
 
   val minecraftUsername = optional(
     nonEmptyText verifying("error.notFound", this.mojang.getMinecraftProfile(_).isDefined)
-  ).unique(_.mcUsername)
+  )
 
   val gitHubUsername = optional(
     nonEmptyText verifying("error.notFound", this.gitHub.getUser(_).isDefined)
-  ).unique(_.ghUsername)
+  )
 
-  val ircNick = optional(nonEmptyText).unique(_.ircNick)
+  val ircNick = optional(nonEmptyText)
 
   val apiKey = nonEmptyText verifying("error.invalidKey", _.equals(getString("api.key").get))
 

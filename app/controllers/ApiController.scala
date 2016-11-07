@@ -49,6 +49,17 @@ final class ApiController @Inject()(forms: SpongeAuthForms,
   }
 
   /**
+    * Returns the user with the specified name.
+    *
+    * @param username Username to lookup
+    * @param apiKey   API key
+    * @return         User if exists
+    */
+  def getUser(username: String, apiKey: String) = (ApiAction(apiKey) andThen WithUser(username)) { implicit request =>
+    Ok(toJson(request.user))
+  }
+
+  /**
     * Deletes the user with the specified username.
     *
     * @param username Username of user to delete

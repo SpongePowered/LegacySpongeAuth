@@ -2,7 +2,7 @@ package external
 
 import javax.inject.Inject
 
-import external.WSUtils.parseJson
+import org.spongepowered.play.util.WSUtils.parseJson
 import play.api.http.Status
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._

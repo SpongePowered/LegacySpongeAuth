@@ -13,7 +13,7 @@ import security.SpongeAuthConfig
   * A collection of forms used by Sponge SSO.
   */
 final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
-                                      override val users: UserDBO,
+                                      override implicit val users: UserDBO,
                                       override val mojang: MojangApi,
                                       override val gitHub: GitHubApi) extends Constraints {
 
@@ -35,9 +35,9 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     "username" -> username,
     "password" -> password,
     "2fa" -> optional(boolean),
-    "mc-username" -> minecraftUsername,
-    "irc-nick" -> ircNick,
-    "gh-username" -> gitHubUsername
+    "mc-username" -> minecraftUsername.unique(_.mcUsername),
+    "irc-nick" -> ircNick.unique(_.ircNick),
+    "gh-username" -> gitHubUsername.unique(_.ghUsername)
   )(SignUpForm.apply)(SignUpForm.unapply))
 
   /**
@@ -61,6 +61,15 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     * The form submitted to reset a user's password.
     */
   lazy val ResetPassword = Form(single("password" -> password))
+
+  /**
+    * Submits changes to user settings.
+    */
+  lazy val SaveSettings = Form(mapping(
+    "mc-username" -> minecraftUsername,
+    "gh-username" -> gitHubUsername,
+    "irc-nick" -> ircNick
+  )(SettingsForm.apply)(SettingsForm.unapply))
 
   final class Api {
 

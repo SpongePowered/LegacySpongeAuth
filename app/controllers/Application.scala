@@ -4,13 +4,16 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
+import db.schema.user.UserTable
 import form.SpongeAuthForms
 import mail.Emails
+import models.User
 import org.spongepowered.play.StatusZ
 import org.spongepowered.play.mail.Mailer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
+import slick.driver.PostgresDriver.api._
 import security.SpongeAuthConfig
 import security.SingleSignOn
 import security.totp.TotpAuth
@@ -179,6 +182,28 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
+  def showSettings() = Authenticated { implicit request =>
+    Ok(views.html.settings(request.user))
+  }
+
+  def saveSettings() = Authenticated { implicit request =>
+    this.forms.SaveSettings.bindFromRequest().fold(
+      hasErrors =>
+        FormError(Application.showSettings(), hasErrors),
+      formData => {
+        val user = request.user
+        println(formData)
+        formData.check(user).map { error =>
+          println(error)
+          Redirect(Application.showSettings()).withError(error)
+        } getOrElse {
+          this.users.saveSettings(user, formData)
+          Redirect(Application.showSettings())
+        }
+      }
+    )
+  }
+
   /**
     * Marks an email with the specified confirmation token as confirmed.
     *
@@ -270,11 +295,11 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *
     * @return Redirection to login form
     */
-  def logOut() = Action { implicit request =>
+  def logOut(redirect: Option[String]) = Action { implicit request =>
     // Clear the current session, delete auth cookie, and delete the
     // server-side Session
     request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
-    Redirect(Application.showLogIn(None, None)).withNewSession.discardingCookies(DiscardingCookie("_token"))
+    Redirect(redirect.getOrElse("/")).withNewSession.discardingCookies(DiscardingCookie("_token"))
   }
 
   /**

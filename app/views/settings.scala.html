@@ -1,0 +1,118 @@
+@import security.SpongeAuthConfig
+@(user: User)(implicit config: SpongeAuthConfig, messages: Messages, request: Request[_], flash: Flash)
+
+@showResetPassword = @{
+    routes.Application.logOut(Some(routes.Application.showPasswordReset(None).path))
+}
+
+@bootstrap.layout(messages("settings.title")) {
+
+    <div class="container" style="margin-top: 90px;">
+        <div class="row">
+            <div class="col-md-12">
+
+                @utils.alert("error")
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">@messages("settings.title")</h4>
+                    </div>
+                    <div class="panel-body">
+                        @helper.form(action = routes.Application.saveSettings()) {
+                            <div class="setting setting-no-border">
+                                <div class="setting-description">@messages("user.email")</div>
+                                <div class="setting-content"><strong>@user.email</strong></div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting setting-no-border">
+                                <div class="setting-description">@messages("user.username")</div>
+                                <div class="setting-content"><strong>@user.username</strong></div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting">
+                                <div class="setting-description">@messages("user.joinDate")</div>
+                                <div class="setting-content"><strong>@user.createdAt.get</strong></div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting setting-no-border">
+                                <div class="setting-description">
+                                    <p>@messages("user.mcUsername")</p>
+                                    <i>@messages("signup.mcUsername.info")</i>
+                                </div>
+                                <div class="setting-content">
+                                    <input name="mc-username" class="form-control" type="text"
+                                           value="@user.mcUsername.getOrElse("")" />
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting setting-no-border">
+                                <div class="setting-description">
+                                    <p>@messages("user.ghUsername")</p>
+                                    <i>@messages("signup.ghUsername.info")</i>
+                                </div>
+                                <div class="setting-content">
+                                    <input name="gh-username" class="form-control" type="text"
+                                           value="@user.ghUsername.getOrElse("")" />
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting">
+                                <div class="setting-description">
+                                    <p>@messages("user.ircNick")</p>
+                                    <i>@messages("signup.ircNick.info")</i>
+                                </div>
+                                <div class="setting-content">
+                                    <input name="irc-nick" class="form-control" type="text"
+                                           value="@user.ircNick.getOrElse("")" />
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <div class="setting setting-no-border">
+                                <div class="setting-description">@messages("user.password")</div>
+                                <div class="setting-content">
+                                    <a href="@showResetPassword" class="btn btn-sm btn-warning pull-right">
+                                        @messages("settings.resetPassword")
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="setting">
+                                <div class="setting-description">
+                                    <p>@messages("user.2fa")</p>
+                                    <i>@messages("signup.2fa")</i>
+                                </div>
+                                <div class="setting-content">
+                                    <div class="pull-right">
+                                    @if(user.isTotpConfirmed) {
+                                        <strong class="text-success">@messages("general.enabled")</strong>
+                                        <a href="#" class="btn btn-xs btn-default">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    } else {
+                                        <strong class="text-danger">@messages("general.disabled")</strong>
+                                        <a href="@routes.TwoFactorAuth.showSetup()" class="btn btn-xs btn-default">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    }
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success pull-right">
+                                @messages("settings.save")
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

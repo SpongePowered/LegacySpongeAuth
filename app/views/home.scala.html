@@ -13,7 +13,7 @@
                     </div>
 
                     <div class="panel-body">
-                        <p>@messages("home.info", user.username)</p>
+                        <p>@Html(messages("home.info", user.username))</p>
                         @redirect.map { r =>
                           <p>@messages("home.redirect")</p>
                           <script>
@@ -22,7 +22,36 @@
                               }, 3000)
                           </script>
                         }
-                        <a href="@Application.logOut()" class="btn btn-primary pull-right">
+
+                        <ul class="list-group list-group-home">
+                            <a href="https://spongepowered.org#downloads" class="list-group-item">
+                                <span>@messages("home.download")</span>
+                                <i class="fa fa-download"></i>
+                                <div class="clearfix"></div>
+                            </a>
+                            <a href="https://forums.spongepowered.org" class="list-group-item">
+                                <span>@messages("home.visitForums")</span>
+                                <i class="fa fa-comment"></i>
+                                <div class="clearfix"></div>
+                            </a>
+                            <a href="https://ore-staging.spongepowered.org" class="list-group-item">
+                                <span>@messages("home.browsePlugins")</span>
+                                <i class="fa fa-plug"></i>
+                                <div class="clearfix"></div>
+                            </a>
+                            <a href="https://ore-staging.spongepowered.org/new" class="list-group-item">
+                                <span>@messages("home.uploadPlugin")</span>
+                                <i class="fa fa-upload"></i>
+                                <div class="clearfix"></div>
+                            </a>
+                            <a href="@Application.showSettings()" class="list-group-item">
+                                <span>@messages("home.manageAccount")</span>
+                                <i class="fa fa-cog"></i>
+                                <div class="clearfix"></div>
+                            </a>
+                        </ul>
+
+                        <a href="@Application.logOut(None)" class="btn btn-primary pull-right">
                             @messages("home.logout")
                         </a>
                     </div>

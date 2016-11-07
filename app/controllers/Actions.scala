@@ -2,7 +2,7 @@ package controllers
 
 import db.UserDBO
 import models.{User, Session => DbSession}
-import org.spongepowered.play.ActionHelpers
+import org.spongepowered.play.util.ActionHelpers
 import play.api.cache.CacheApi
 import play.api.mvc.Results._
 import play.api.mvc._
