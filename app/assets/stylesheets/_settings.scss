@@ -1,0 +1,14 @@
+.panel-settings {
+  .setting:first-child {
+    padding-top: 0;
+  }
+
+  .setting-avatar {
+    position: relative;
+    .setting-content > div {
+      position: absolute;
+      bottom: 20px;
+      input { margin-top: 10px; }
+    }
+  }
+}

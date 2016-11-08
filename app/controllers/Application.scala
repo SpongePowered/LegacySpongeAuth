@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
+import external.GravatarApi
 import form.SpongeAuthForms
 import mail.Emails
 import org.spongepowered.play.StatusZ
@@ -27,6 +28,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   totp: TotpAuth,
                                   qrRenderer: QrCodeRenderer,
                                   status: StatusZ,
+                                  gravatar: GravatarApi,
                                   override val ssoConsumer: SingleSignOnConsumer,
                                   implicit override val users: UserDBO,
                                   implicit override val cache: CacheApi,
@@ -72,16 +74,19 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def signUp() = NotAuthenticated { implicit request =>
     this.forms.SignUp.bindFromRequest.fold(
       hasErrors =>
-        FormError(Application.showSignUp(None, None), hasErrors),
+        FormError(routes.Application.showSignUp(None, None), hasErrors),
       formData => {
         // Create the user and send confirmation email
-        val user = this.users.createUser(formData)
+        var avatarUrl = this.users.defaultAvatarUrl
+        if (this.gravatar.exists(formData.email))
+          avatarUrl = this.gravatar.get(formData.email)
+        val user = this.users.createUser(formData, avatarUrl)
         val confirmation = this.users.createEmailConfirmation(user)
         this.mailer.push(this.emails.confirmation(confirmation))
         if (formData.setup2fa)
-          Redirect(TwoFactorAuth.showSetup()).remembering(user)
+          Redirect(routes.TwoFactorAuth.showSetup()).remembering(user)
         else
-          Redirect(Application.showHome()).authenticatedAs(user)
+          Redirect(routes.Application.showHome()).authenticatedAs(user)
       }
     )
   }

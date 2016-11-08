@@ -5,6 +5,7 @@ import java.util.{Date, UUID}
 import javax.inject.Inject
 
 import com.google.common.base.Preconditions._
+import controllers.routes
 import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
 import form.{SettingsForm, SignUpForm, TSignUpForm}
@@ -50,6 +51,8 @@ trait UserDBO {
   val encryptionSecret: String
   /** PasswordFactory instance */
   val passwords: PasswordFactory
+  /** Path to the default avatar url */
+  val defaultAvatarUrl: String
 
   implicit val self = this
 
@@ -66,11 +69,14 @@ trait UserDBO {
     * @param formData Form data to process
     * @return         New user
     */
-  def createUser(formData: TSignUpForm, verified: Boolean = false, dummy: Boolean = false): User = {
+  def createUser(formData: TSignUpForm,
+                 avatarUrl: String = defaultAvatarUrl,
+                 verified: Boolean = false,
+                 dummy: Boolean = false): User = {
     checkNotNull(formData, "null form data", "")
     // Create user
     val pwd = if (dummy) None else Some(this.passwords.hash(formData.password))
-    var user = new User(formData, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
+    var user = new User(formData, avatarUrl, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
     val insertion = this.users returning this.users += user
     await(db run insertion)
   }
@@ -491,6 +497,7 @@ final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
   override val maxSessionAge = this.config.play.getInt("http.session.maxAge").get
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get
   override val maxPasswordResetAge = this.config.security.getLong("password.maxResetAge").get
-  override val encryptionSecret: String = this.config.play.getString("crypto.secret").get
+  override val encryptionSecret = this.config.play.getString("crypto.secret").get
+  override val defaultAvatarUrl = routes.Assets.at("images/spongie.png").path()
 
 }

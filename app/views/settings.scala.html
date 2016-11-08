@@ -17,8 +17,24 @@
                     <div class="panel-heading">
                         <h4 class="panel-title">@messages("settings.title")</h4>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body panel-settings">
                         @helper.form(action = routes.Application.saveSettings()) {
+
+                            <div class="setting setting-avatar">
+                                <div class="setting-description">
+                                    <p>@messages("user.avatar")</p>
+                                    <img class="user-avatar" src="@user.avatarUrl" width="125" height="125" />
+                                </div>
+                                <div class="setting-content">
+                                    <div>
+                                        <input name="avatar-url" type="url" class="form-control"
+                                               placeholder="@Html(messages("user.avatar.url"))" />
+                                        <input name="avatar-file" type="file" />
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+
                             <div class="setting setting-no-border">
                                 <div class="setting-description">@messages("user.email")</div>
                                 <div class="setting-content"><strong>@user.email</strong></div>

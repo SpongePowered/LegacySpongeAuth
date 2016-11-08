@@ -17,6 +17,7 @@ class Module extends AbstractModule {
     bind(classOf[QrCodeRenderer]).to(classOf[QrCodeRendererImpl])
     bind(classOf[MojangApi]).to(classOf[MojangApiImpl])
     bind(classOf[GitHubApi]).to(classOf[GitHubApiImpl])
+    bind(classOf[GravatarApi]).to(classOf[Gravatar])
   }
 
 }

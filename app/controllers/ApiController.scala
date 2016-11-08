@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import api.SpongeAuthWrites
 import db.UserDBO
+import external.GravatarApi
 import form.SpongeAuthForms
 import mail.Emails
 import org.spongepowered.play.mail.Mailer
@@ -20,6 +21,7 @@ import security.SpongeAuthConfig
 final class ApiController @Inject()(forms: SpongeAuthForms,
                                     emails: Emails,
                                     mailer: Mailer,
+                                    gravatar: GravatarApi,
                                     override val ssoConsumer: SingleSignOnConsumer,
                                     override implicit val users: UserDBO,
                                     override val config: SpongeAuthConfig,
@@ -40,7 +42,10 @@ final class ApiController @Inject()(forms: SpongeAuthForms,
       },
       formData => {
         val verified = formData.isVerified
-        val user = this.users.createUser(formData, verified = verified, dummy = formData.isDummy)
+        var avatarUrl = this.users.defaultAvatarUrl
+        if (this.gravatar.exists(formData.email))
+          avatarUrl = this.gravatar.get(formData.email)
+        val user = this.users.createUser(formData, avatarUrl, verified, formData.isDummy)
         if (!verified) {
           val confirmation = this.users.createEmailConfirmation(user)
           this.mailer.push(this.emails.confirmation(confirmation))
