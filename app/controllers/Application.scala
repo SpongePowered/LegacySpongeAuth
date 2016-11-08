@@ -187,38 +187,6 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   }
 
   /**
-    * Displays the user account settings page.
-    *
-    * @return User account settings
-    */
-  def showSettings() = Authenticated { implicit request =>
-    Ok(views.html.settings(request.user))
-  }
-
-  /**
-    * Submits changes to a user's settings.
-    *
-    * @return Redirect to settings page
-    */
-  def saveSettings() = Authenticated { implicit request =>
-    this.forms.SaveSettings.bindFromRequest().fold(
-      hasErrors =>
-        FormError(Application.showSettings(), hasErrors),
-      formData => {
-        val user = request.user
-        println(formData)
-        formData.check(user).map { error =>
-          println(error)
-          Redirect(Application.showSettings()).withError(error)
-        } getOrElse {
-          this.users.saveSettings(user, formData)
-          Redirect(Application.showSettings())
-        }
-      }
-    )
-  }
-
-  /**
     * Marks an email with the specified confirmation token as confirmed.
     *
     * @param token Token of email confirmation

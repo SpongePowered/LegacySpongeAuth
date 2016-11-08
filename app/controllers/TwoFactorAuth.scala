@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.Inject
 
-import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SpongeAuthForms
 import org.spongepowered.play.security.CryptoUtils._
@@ -39,7 +38,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
   def showSetup() = WithSession { implicit request =>
     val user = request.userSession.user
     if (user.isTotpConfirmed)
-      Redirect(Application.showHome())
+      Redirect(routes.Application.showHome())
     else {
       // Generate a URI for the OTP auth
       val encSecret = user.totpSecret.getOrElse(this.users.generateTotpSecret(user).totpSecret.get)
@@ -67,14 +66,14 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     val user = session.user
     this.forms.VerifyTotp.bindFromRequest().fold(
       hasErrors =>
-        FormError(TwoFactorAuth.showSetup(), hasErrors),
+        FormError(routes.TwoFactorAuth.showSetup(), hasErrors),
       code => {
         if (!user.isTotpConfirmed && user.totpSecret.isDefined && this.users.verifyTotp(user, code)) {
           this.users.setSessionAuthenticated(session)
           this.users.setTotpConfirmed(user)
-          Redirect(Application.showHome())
+          Redirect(routes.Application.showHome())
         } else
-          Redirect(TwoFactorAuth.showSetup()).withError("2fa.code.invalid")
+          Redirect(routes.TwoFactorAuth.showSetup()).withError("2fa.code.invalid")
       }
     )
   }
@@ -87,7 +86,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
   def showVerification() = WithSession { implicit request =>
     val user = request.userSession.user
     if (!user.isTotpConfirmed)
-      Redirect(Application.showHome())
+      Redirect(routes.Application.showHome())
     else
       Ok(views.html.tfa.verify(request.userSession.user))
   }
@@ -108,7 +107,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     else {
       this.forms.VerifyTotp.bindFromRequest().fold(
         hasErrors =>
-          FormError(TwoFactorAuth.showVerification(), hasErrors),
+          FormError(routes.TwoFactorAuth.showVerification(), hasErrors),
         code => {
           if (user.isTotpConfirmed && user.totpSecret.isDefined && this.users.verifyTotp(user, code)) {
             if (session.isAuthenticated) {
@@ -122,11 +121,11 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
               }
             } else {
               this.users.setSessionAuthenticated(session)
-              Redirect(Application.showHome())
+              Redirect(routes.Application.showHome())
             }
           } else {
             user = this.users.addFailedTotpAttempt(user)
-            Redirect(TwoFactorAuth.showVerification()).withError("2fa.code.invalid")
+            Redirect(routes.TwoFactorAuth.showVerification()).withError("2fa.code.invalid")
           }
         }
       )
@@ -152,7 +151,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     */
   def disableTotp(sso: Option[String], sig: Option[String]) = VerifiedAction(sso, sig) { implicit request =>
     this.users.setTotpConfirmed(request.user, confirmed = false)
-    Redirect(Application.showSettings())
+    Redirect(routes.Settings.showSettings())
   }
 
 }

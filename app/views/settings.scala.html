@@ -7,6 +7,9 @@
 
 @bootstrap.layout(messages("settings.title")) {
 
+    <script type="text/javascript" src="@routes.Assets.at("javascripts/settings.js")"></script>
+    <script>username = '@user.username';</script>
+
     <div class="container" style="margin-top: 90px;">
         <div class="row">
             <div class="col-md-12">
@@ -18,112 +21,116 @@
                         <h4 class="panel-title">@messages("settings.title")</h4>
                     </div>
                     <div class="panel-body panel-settings">
-                        @helper.form(action = routes.Application.saveSettings()) {
 
-                            <div class="setting setting-avatar">
-                                <div class="setting-description">
-                                    <p>@messages("user.avatar")</p>
-                                    <img class="user-avatar" src="@user.avatarUrl" width="125" height="125" />
-                                </div>
-                                <div class="setting-content">
-                                    <div>
-                                        <input name="avatar-url" type="url" class="form-control"
-                                               placeholder="@Html(messages("user.avatar.url"))" />
-                                        <input name="avatar-file" type="file" />
-                                    </div>
-                                </div>
-                                <div class="clearfix"></div>
+                        <div class="setting setting-avatar">
+                            <div class="setting-description">
+                                <p>
+                                    @messages("user.avatar")
+                                    <i class="fa fa-spinner fa-spin" style="display: none;"></i>
+                                </p>
+                                <img class="user-avatar" src="@user.avatarUrl" width="125" height="125" />
                             </div>
-
-                            <div class="setting setting-no-border">
-                                <div class="setting-description">@messages("user.email")</div>
-                                <div class="setting-content"><strong>@user.email</strong></div>
-                                <div class="clearfix"></div>
+                            <div class="setting-content">
+                                @helper.form(action = routes.Settings.updateAvatar()) {
+                                    <input name="avatar-file" type="file" />
+                                    <button type="button" class="btn btn-reset btn-info">
+                                        @messages("user.avatar.reset")
+                                    </button>
+                                }
                             </div>
+                            <div class="clearfix"></div>
+                        </div>
 
-                            <div class="setting setting-no-border">
-                                <div class="setting-description">@messages("user.username")</div>
-                                <div class="setting-content"><strong>@user.username</strong></div>
-                                <div class="clearfix"></div>
+                        <div class="setting setting-no-border">
+                            <div class="setting-description">@messages("user.email")</div>
+                            <div class="setting-content"><strong>@user.email</strong></div>
+                            <div class="clearfix"></div>
+                        </div>
+
+                        <div class="setting setting-no-border">
+                            <div class="setting-description">@messages("user.username")</div>
+                            <div class="setting-content"><strong>@user.username</strong></div>
+                            <div class="clearfix"></div>
+                        </div>
+
+                        <div class="setting">
+                            <div class="setting-description">@messages("user.joinDate")</div>
+                            <div class="setting-content"><strong>@user.createdAt.get</strong></div>
+                            <div class="clearfix"></div>
+                        </div>
+
+                        <div class="setting setting-no-border">
+                            <div class="setting-description">
+                                <p>@messages("user.mcUsername")</p>
+                                <i>@messages("signup.mcUsername.info")</i>
                             </div>
-
-                            <div class="setting">
-                                <div class="setting-description">@messages("user.joinDate")</div>
-                                <div class="setting-content"><strong>@user.createdAt.get</strong></div>
-                                <div class="clearfix"></div>
+                            <div class="setting-content">
+                                <input name="mc-username" class="form-control" type="text" form="form-save"
+                                       value="@user.mcUsername.getOrElse("")" />
                             </div>
+                            <div class="clearfix"></div>
+                        </div>
 
-                            <div class="setting setting-no-border">
-                                <div class="setting-description">
-                                    <p>@messages("user.mcUsername")</p>
-                                    <i>@messages("signup.mcUsername.info")</i>
-                                </div>
-                                <div class="setting-content">
-                                    <input name="mc-username" class="form-control" type="text"
-                                           value="@user.mcUsername.getOrElse("")" />
-                                </div>
-                                <div class="clearfix"></div>
+                        <div class="setting setting-no-border">
+                            <div class="setting-description">
+                                <p>@messages("user.ghUsername")</p>
+                                <i>@messages("signup.ghUsername.info")</i>
                             </div>
-
-                            <div class="setting setting-no-border">
-                                <div class="setting-description">
-                                    <p>@messages("user.ghUsername")</p>
-                                    <i>@messages("signup.ghUsername.info")</i>
-                                </div>
-                                <div class="setting-content">
-                                    <input name="gh-username" class="form-control" type="text"
-                                           value="@user.ghUsername.getOrElse("")" />
-                                </div>
-                                <div class="clearfix"></div>
+                            <div class="setting-content">
+                                <input name="gh-username" class="form-control" type="text" form="form-save"
+                                       value="@user.ghUsername.getOrElse("")" />
                             </div>
+                            <div class="clearfix"></div>
+                        </div>
 
-                            <div class="setting">
-                                <div class="setting-description">
-                                    <p>@messages("user.ircNick")</p>
-                                    <i>@messages("signup.ircNick.info")</i>
-                                </div>
-                                <div class="setting-content">
-                                    <input name="irc-nick" class="form-control" type="text"
-                                           value="@user.ircNick.getOrElse("")" />
-                                </div>
-                                <div class="clearfix"></div>
+                        <div class="setting">
+                            <div class="setting-description">
+                                <p>@messages("user.ircNick")</p>
+                                <i>@messages("signup.ircNick.info")</i>
                             </div>
+                            <div class="setting-content">
+                                <input name="irc-nick" class="form-control" type="text" form="form-save"
+                                       value="@user.ircNick.getOrElse("")" />
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
 
-                            <div class="setting setting-no-border">
-                                <div class="setting-description">@messages("user.password")</div>
-                                <div class="setting-content">
-                                    <a href="@showResetPassword" class="btn btn-sm btn-warning pull-right">
-                                        @messages("settings.resetPassword")
+                        <div class="setting setting-no-border">
+                            <div class="setting-description">@messages("user.password")</div>
+                            <div class="setting-content">
+                                <a href="@showResetPassword" class="btn btn-sm btn-warning pull-right">
+                                    @messages("settings.resetPassword")
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="setting">
+                            <div class="setting-description">
+                                <p>@messages("user.2fa")</p>
+                                <i>@messages("signup.2fa")</i>
+                            </div>
+                            <div class="setting-content">
+                                <div class="pull-right">
+                                @if(user.isTotpConfirmed) {
+                                    <strong class="text-success">@messages("general.enabled")</strong>
+                                    <a href="@routes.TwoFactorAuth.showDisableTotpVerification()"
+                                       class="btn btn-xs btn-default">
+                                        <i class="fa fa-edit"></i>
                                     </a>
+                                } else {
+                                    <strong class="text-danger">@messages("general.disabled")</strong>
+                                    <a href="@routes.TwoFactorAuth.showSetup()" class="btn btn-xs btn-default">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                }
                                 </div>
                             </div>
+                            <div class="clearfix"></div>
+                        </div>
 
-                            <div class="setting">
-                                <div class="setting-description">
-                                    <p>@messages("user.2fa")</p>
-                                    <i>@messages("signup.2fa")</i>
-                                </div>
-                                <div class="setting-content">
-                                    <div class="pull-right">
-                                    @if(user.isTotpConfirmed) {
-                                        <strong class="text-success">@messages("general.enabled")</strong>
-                                        <a href="@routes.TwoFactorAuth.showDisableTotpVerification()"
-                                           class="btn btn-xs btn-default">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                    } else {
-                                        <strong class="text-danger">@messages("general.disabled")</strong>
-                                        <a href="@routes.TwoFactorAuth.showSetup()" class="btn btn-xs btn-default">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                    }
-                                    </div>
-                                </div>
-                                <div class="clearfix"></div>
-                            </div>
-
+                        @helper.form(action = routes.Settings.saveSettings(), 'id -> "form-save") {
                             <button type="submit" class="btn btn-success pull-right">
-                                @messages("settings.save")
+                               @messages("settings.save")
                             </button>
                         }
                     </div>

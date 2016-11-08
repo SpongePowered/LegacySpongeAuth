@@ -29,8 +29,12 @@ POST    /2fa/verify                 @controllers.TwoFactorAuth.verifyTotp()
 GET     /2fa/disable                @controllers.TwoFactorAuth.showDisableTotpVerification()
 GET     /2fa/disable/verified       @controllers.TwoFactorAuth.disableTotp(sso: Option[String], sig: Option[String])
 
-GET     /settings                   @controllers.Application.showSettings()
-POST    /settings                   @controllers.Application.saveSettings()
+GET     /settings                   @controllers.Settings.showSettings()
+POST    /settings                   @controllers.Settings.saveSettings()
+POST    /settings/avatar            @controllers.Settings.updateAvatar()
+POST    /settings/avatar/reset      @controllers.Settings.resetAvatar()
+
+GET     /avatars/:user              @controllers.Settings.showAvatar(user)
 
 GET     /statusz                    @controllers.Application.showStatusZ()
 

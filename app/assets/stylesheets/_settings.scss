@@ -5,10 +5,13 @@
 
   .setting-avatar {
     position: relative;
-    .setting-content > div {
+    .setting-content > form {
       position: absolute;
       bottom: 20px;
-      input { margin-top: 10px; }
+      .btn {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   }
 }

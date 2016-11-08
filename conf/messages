@@ -112,3 +112,4 @@ user.2fa = Two-Factor Authentication
 user.password = Password
 user.avatar = Profile picture
 user.avatar.url = Update by URL&hellip;
+user.avatar.reset = Reset

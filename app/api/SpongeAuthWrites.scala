@@ -14,6 +14,7 @@ trait SpongeAuthWrites {
       "created_at"  -> user.createdAt.get.toString,
       "email"       -> user.email,
       "username"    -> user.username,
+      "avatar_url"  -> user.avatarUrl,
       "is_admin"    -> user.isAdmin,
       "mc_username" -> user.mcUsername,
       "irc_nick"    -> user.ircNick,

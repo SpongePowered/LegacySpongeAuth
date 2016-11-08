@@ -1,5 +1,8 @@
 package db
 
+import java.io.File
+import java.nio.file.Files._
+import java.nio.file.{Path, Paths}
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 import javax.inject.Inject
@@ -10,6 +13,7 @@ import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
 import form.{SettingsForm, SignUpForm, TSignUpForm}
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
+import org.apache.commons.io.FileUtils._
 import org.spongepowered.play.security.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
@@ -94,7 +98,6 @@ trait UserDBO {
     * @return         Updated user
     */
   def saveSettings(user: User, formData: SettingsForm): User = {
-    println("saveSettings() : " + formData)
     checkNotNull(user, "null user", "")
     checkArgument(user.id.isDefined, "undefined user", "")
     checkNotNull(formData, "null form data", "")
@@ -102,6 +105,57 @@ trait UserDBO {
     saveSetting(user, _.ghUsername, formData.ghUsername)
     saveSetting(user, _.ircNick, formData.ircNick)
     get(user.id.get).get
+  }
+
+  private def getAvatarDir(user: User) = Paths.get(s"files/users/${user.username}/avatar")
+
+  /**
+    * Sets the specified user's avatar to the specified file with the given
+    * name.
+    *
+    * @param user User to set avatar of
+    * @param name File name
+    * @param file Avatar file
+    * @return     Updated user
+    */
+  def setAvatar(user: User, name: String, file: File): User = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
+    checkNotNull(name, "null filename", "")
+    checkNotNull(file, "null file", "")
+    val path = getAvatarDir(user).resolve(name)
+    if (notExists(path.getParent))
+      createDirectories(path.getParent)
+    cleanDirectory(path.getParent.toFile)
+    copy(file.toPath, path)
+    saveSetting(user, _.avatarUrl, Some(routes.Settings.showAvatar(user.username).path()))
+    get(user.id.get).get
+  }
+
+  /**
+    * Sets the specified user's avatar to the specified URL.
+    *
+    * @param user User to set avatar of
+    * @param url  Avatar URL
+    * @return     Updated user
+    */
+  def setAvatar(user: User, url: String): User = {
+    saveSetting(user, _.avatarUrl, Option(url))
+    get(user.id.get).get
+  }
+
+  /**
+    * Returns path to the specified user's avatar.
+    *
+    * @param user User to get avatar path of
+    * @return     Path to user's avatar
+    */
+  def getAvatarPath(user: User): Option[Path] = {
+    val javaOpt = list(getAvatarDir(user)).findFirst()
+    if (javaOpt.isPresent)
+      Some(javaOpt.get())
+    else
+      None
   }
 
   /**
