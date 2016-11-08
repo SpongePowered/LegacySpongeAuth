@@ -9,6 +9,7 @@ abstract class AbstractUserTable(tag: Tag, name: String) extends Table[User](tag
 
   def id                  = column[Int]("id", O.PrimaryKey, O.AutoInc)
   def createdAt           = column[Timestamp]("created_at")
+  def joinDate            = column[Timestamp]("join_date")
   def email               = column[String]("email")
   def isEmailConfirmed    = column[Boolean]("is_email_confirmed")
   def username            = column[String]("username")
@@ -24,8 +25,8 @@ abstract class AbstractUserTable(tag: Tag, name: String) extends Table[User](tag
   def failedTotpAttempts  = column[Int]("failed_totp_attempts")
   def deletedAt           = column[Timestamp]("deleted_at")
 
-  override def * = (id.?, createdAt.?, email, isEmailConfirmed, username, avatarUrl, password.?, salt.?, isAdmin,
-                    mcUsername.?, ircNick.?, ghUsername.?, totpSecret.?, isTotpConfirmed, failedTotpAttempts,
+  override def * = (id.?, createdAt, joinDate, email, isEmailConfirmed, username, avatarUrl, password.?, salt.?,
+                    isAdmin, mcUsername.?, ircNick.?, ghUsername.?, totpSecret.?, isTotpConfirmed, failedTotpAttempts,
                     deletedAt.?) <> (User.tupled, User.unapply)
 
 }

@@ -44,18 +44,23 @@ if importUsers:
     curIn.execute(query)
     users = curIn.fetchall()
 
-    importStmt = "INSERT INTO users (created_at, email, username, password, salt, is_admin) VALUES \n"
-    values = "('%s', '%s', '%s', '%s', '%s', %s)"
+    importStmt = ('INSERT INTO users ('
+                  'created_at, join_date, email, is_email_confirmed, username, avatar_url, password, salt, is_admin'
+                  ') VALUES \n')
+
+    values = "('%s', '%s', '%s', %s, '%s', '/assets/images/spongie.png', '%s', '%s', %s)"
     usersLen = len(users)
 
     print("Importing %d users..." % usersLen)
     for i, user in enumerate(users):
+        created_at = user['created_at']
         username = user['username']
         email = user['email']
+        active = user['active']
         password = user['password_hash']
         salt = user['salt']
         admin = user['admin']
-        importStmt += values % (datetime.now(), email, username, password, salt, admin)
+        importStmt += values % (datetime.now(), created_at, email, active, username, password, salt, admin)
         if (i < usersLen - 1):
             importStmt += ',\n'
 

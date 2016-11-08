@@ -80,7 +80,7 @@ trait UserDBO {
     checkNotNull(formData, "null form data", "")
     // Create user
     val pwd = if (dummy) None else Some(this.passwords.hash(formData.password))
-    var user = new User(formData, avatarUrl, pwd).copy(createdAt = Some(theTime), isEmailConfirmed = verified)
+    var user = new User(formData, theTime, avatarUrl, pwd).copy(isEmailConfirmed = verified)
     val insertion = this.users returning this.users += user
     await(db run insertion)
   }
@@ -140,6 +140,8 @@ trait UserDBO {
     * @return     Updated user
     */
   def setAvatar(user: User, url: String): User = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
     saveSetting(user, _.avatarUrl, Option(url))
     get(user.id.get).get
   }
@@ -151,6 +153,8 @@ trait UserDBO {
     * @return     Path to user's avatar
     */
   def getAvatarPath(user: User): Option[Path] = {
+    checkNotNull(user, "null user", "")
+    checkArgument(user.id.isDefined, "undefined user", "")
     val javaOpt = list(getAvatarDir(user)).findFirst()
     if (javaOpt.isPresent)
       Some(javaOpt.get())

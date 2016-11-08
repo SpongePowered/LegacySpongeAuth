@@ -11,7 +11,8 @@ trait SpongeAuthWrites {
   implicit val userWrites = new Writes[User] {
     def writes(user: User): JsValue = Json.obj(
       "id"          -> user.id.get,
-      "created_at"  -> user.createdAt.get.toString,
+      "created_at"  -> user.createdAt.toString,
+      "join_date"   -> user.joinDate.toString,
       "email"       -> user.email,
       "username"    -> user.username,
       "avatar_url"  -> user.avatarUrl,

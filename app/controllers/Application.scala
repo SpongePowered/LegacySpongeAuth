@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.Inject
 
-import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import external.GravatarApi
 import form.SpongeAuthForms
@@ -120,7 +119,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def logIn() = NotAuthenticated { implicit request =>
     // Process form data
-    val errorRedirect = Application.showLogIn(None, None)
+    val errorRedirect = routes.Application.showLogIn(None, None)
     this.forms.LogIn.bindFromRequest().fold(
       hasErrors =>
         FormError(errorRedirect, hasErrors),
@@ -133,9 +132,9 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
           case Some(user) =>
             // Success, check if the user has 2FA enabled
             if (!user.isTotpConfirmed)
-              Redirect(Application.showHome()).authenticatedAs(user)
+              Redirect(routes.Application.showHome()).authenticatedAs(user)
             else
-              Redirect(TwoFactorAuth.showVerification()).remembering(user)
+              Redirect(routes.TwoFactorAuth.showVerification()).remembering(user)
         }
       }
     )
@@ -150,7 +149,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     this.users.current match {
       case None =>
         // Redirect to log in page
-        Redirect(Application.showLogIn(None, None))
+        Redirect(routes.Application.showLogIn(None, None))
       case Some(user) =>
         // User found
         if (user.isEmailConfirmed) {
@@ -164,7 +163,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
               if (sso.ignoreSession) {
                 // We've been told to ignore session data, the SSO redirect
                 // must go through verify()
-                Redirect(Application.showVerification(None, None))
+                Redirect(routes.Application.showVerification(None, None))
               } else {
                 // Complete SSO request
                 Ok(views.html.home(user, Some(sso.getRedirect(user)))).discardingCookies(DiscardingCookie("_sso"))
@@ -195,7 +194,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def confirmEmail(token: String) = Action { implicit request =>
     this.users.confirmEmail(token)
-    Redirect(Application.showHome())
+    Redirect(routes.Application.showHome())
   }
 
   /**
@@ -238,15 +237,15 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def sendPasswordReset() = NotAuthenticated { implicit request =>
     this.forms.SendPasswordReset.bindFromRequest().fold(
       hasErrors =>
-        FormError(Application.showPasswordReset(None), hasErrors),
+        FormError(routes.Application.showPasswordReset(None), hasErrors),
       username => {
         this.users.withName(username) match {
           case None =>
-            Redirect(Application.showPasswordReset(None)).withError("error.notFound.username")
+            Redirect(routes.Application.showPasswordReset(None)).withError("error.notFound.username")
           case Some(user) =>
             val email = this.emails.resetPassword(this.users.createPasswordReset(user))
             this.mailer.push(email)
-            Redirect(Application.showPasswordReset(None)).flashing("sent" -> "true")
+            Redirect(routes.Application.showPasswordReset(None)).flashing("sent" -> "true")
         }
       }
     )
@@ -262,12 +261,12 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def resetPassword(token: String) = NotAuthenticated { implicit request =>
     this.forms.ResetPassword.bindFromRequest().fold(
       hasErrors =>
-        FormError(Application.showPasswordReset(Some(token)), hasErrors),
+        FormError(routes.Application.showPasswordReset(Some(token)), hasErrors),
       newPassword => {
         if (this.users.resetPassword(token, newPassword))
-          Redirect(Application.showLogIn(None, None)).withSuccess("success.reset.password")
+          Redirect(routes.Application.showLogIn(None, None)).withSuccess("success.reset.password")
         else
-          Redirect(Application.showPasswordReset(None)).withError("error.expired.password")
+          Redirect(routes.Application.showPasswordReset(None)).withError("error.expired.password")
       }
     )
   }
@@ -316,7 +315,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         BadRequest
       case Some(so) =>
         // Validate log in form
-        val failCall = Application.showVerification(Some(so.payload), Some(so.sig))
+        val failCall = routes.Application.showVerification(Some(so.payload), Some(so.sig))
         this.forms.LogIn.bindFromRequest().fold(
           hasErrors => {
             // User error
@@ -333,7 +332,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                 if (user.username.equals(request.user.username)) {
                   // Check for 2FA
                   if (user.isTotpConfirmed)
-                    Redirect(TwoFactorAuth.showVerification())
+                    Redirect(routes.TwoFactorAuth.showVerification())
                   else
                     Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
                 } else
@@ -361,7 +360,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def reset() = Action {
     this.config.checkDebug()
     this.users.removeAll()
-    Redirect(Application.showSignUp(None, None))
+    Redirect(routes.Application.showSignUp(None, None))
   }
 
 }
