@@ -2,11 +2,12 @@ package controllers
 
 import db.UserDBO
 import models.{User, Session => DbSession}
+import org.spongepowered.play.security.SingleSignOnConsumer
 import org.spongepowered.play.util.ActionHelpers
 import play.api.cache.CacheApi
 import play.api.mvc.Results._
 import play.api.mvc._
-import security.{SingleSignOn, SpongeAuthConfig}
+import security.{SingleSignOnRequest, SpongeAuthConfig}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -18,6 +19,8 @@ trait Actions extends Requests with ActionHelpers {
 
   val users: UserDBO
   val config: SpongeAuthConfig
+  val ssoConsumer: SingleSignOnConsumer
+
   val ssoSecret = this.config.sso.getString("secret").get
   val ssoMaxAge = this.config.sso.getLong("maxAge").get.millis
 
@@ -42,6 +45,9 @@ trait Actions extends Requests with ActionHelpers {
 
   /** Looks up a user and returns NotFound if not found. */
   def WithUser(username: String) = withUser(username)
+
+  def VerifiedAction(username: String, sso: Option[String], sig: Option[String])
+  = WithUser(username) andThen verifiedAction(sso, sig)
 
   /**
     * An implicit wrapper for a Result to provide some added functionality.
@@ -85,6 +91,24 @@ trait Actions extends Requests with ActionHelpers {
 
   // Action impl
 
+  private def verifiedAction(sso: Option[String], sig: Option[String]) = new ActionFilter[UserRequest] {
+    def filter[A](request: UserRequest[A]): Future[Option[Result]] = Future.successful {
+      if (sso.isEmpty || sig.isEmpty)
+        Some(Unauthorized)
+      else {
+        Actions.this.ssoConsumer.authenticate(sso.get, sig.get) match {
+          case None =>
+            Some(Unauthorized)
+          case Some(spongeUser) =>
+            if (spongeUser.username.equals(request.user.username))
+              None
+            else
+              Some(Unauthorized)
+        }
+      }
+    }
+  }
+
   private def withUser(username: String) = new ActionRefiner[Request, UserRequest] {
     def refine[A](request: Request[A]): Future[Either[Result, UserRequest[A]]] = Future.successful {
       Actions.this.users.withName(username)
@@ -104,13 +128,13 @@ trait Actions extends Requests with ActionHelpers {
 
   private def notAuthAction(sso: Option[String], sig: Option[String]) = new ActionFilter[Request] {
     def filter[A](request: Request[A]): Future[Option[Result]] = Future.successful {
-      val signOn = SingleSignOn.parseValidateAndCache(
+      val signOn = SingleSignOnRequest.parseValidateAndCache(
         secret = Actions.this.ssoSecret,
         maxAge = Actions.this.ssoMaxAge,
         sso = sso,
         sig = sig
       )(request.session, Actions.this.cache)
-      val result = SingleSignOn.addToResult(Redirect(routes.Application.showHome()), signOn)
+      val result = SingleSignOnRequest.addToResult(Redirect(routes.Application.showHome()), signOn)
       Actions.this.users.current(request).map(_ => result)
     }
   }

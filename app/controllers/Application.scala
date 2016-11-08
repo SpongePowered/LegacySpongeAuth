@@ -4,18 +4,16 @@ import javax.inject.Inject
 
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
-import db.schema.user.UserTable
 import form.SpongeAuthForms
 import mail.Emails
-import models.User
 import org.spongepowered.play.StatusZ
 import org.spongepowered.play.mail.Mailer
+import org.spongepowered.play.security.SingleSignOnConsumer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import slick.driver.PostgresDriver.api._
 import security.SpongeAuthConfig
-import security.SingleSignOn
+import security.SingleSignOnRequest
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 
@@ -29,6 +27,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   totp: TotpAuth,
                                   qrRenderer: QrCodeRenderer,
                                   status: StatusZ,
+                                  override val ssoConsumer: SingleSignOnConsumer,
                                   implicit override val users: UserDBO,
                                   implicit override val cache: CacheApi,
                                   implicit override val config: SpongeAuthConfig)
@@ -47,9 +46,9 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def showSignUp(sso: Option[String], sig: Option[String]) = SSORedirect(sso, sig) { implicit request =>
     // Parse and cache any incoming SSO request
-    val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
+    val signOn = SingleSignOnRequest.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // Return result with SSO request reference (if any)
-    SingleSignOn.addToResult(Ok(views.html.signup.view(sso, sig)), signOn)
+    SingleSignOnRequest.addToResult(Ok(views.html.signup.view(sso, sig)), signOn)
   }
 
   /**
@@ -100,9 +99,9 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     */
   def showLogIn(sso: Option[String], sig: Option[String]) = SSORedirect(sso, sig) { implicit request =>
     // Parse and cache any incoming SSO request
-    val signOn = SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
+    val signOn = SingleSignOnRequest.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig)
     // Return result with SSO reference (if any)
-    SingleSignOn.addToResult(Ok(views.html.login.form()), signOn)
+    SingleSignOnRequest.addToResult(Ok(views.html.login.form()), signOn)
   }
 
   /**
@@ -151,7 +150,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         // User found
         if (user.isEmailConfirmed) {
           // Look for cached SSO request
-          SingleSignOn.bindFromRequest() match {
+          SingleSignOnRequest.bindFromRequest() match {
             case None =>
               // No SSO request, just show them the normal page
               Ok(views.html.home(user, None))
@@ -321,13 +320,13 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *             signature, verification form otherwise
     */
   def showVerification(sso: Option[String], sig: Option[String]) = Authenticated { implicit request =>
-    SingleSignOn.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
+    SingleSignOnRequest.parseValidateAndCache(this.ssoSecret, this.ssoMaxAge, sso, sig) match {
       case None =>
         // SSO request required
         BadRequest
       case Some(so) =>
         // Show form with SSO reference
-        SingleSignOn.addToResult(Ok(views.html.login.verify(sso, sig)), Some(so))
+        SingleSignOnRequest.addToResult(Ok(views.html.login.verify(sso, sig)), Some(so))
     }
   }
 
@@ -338,7 +337,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     *         otherwise
     */
   def verify() = Authenticated { implicit request =>
-    SingleSignOn.bindFromRequest() match {
+    SingleSignOnRequest.bindFromRequest() match {
       case None =>
         // SSO required
         BadRequest
@@ -359,8 +358,11 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                 Redirect(failCall).flashing("error" -> "error.verify.user")
               case Some(user) =>
                 if (user.username.equals(request.user.username)) {
-                  // Redirect directly back to SSO origin
-                  Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
+                  // Check for 2FA
+                  if (user.isTotpConfirmed)
+                    Redirect(TwoFactorAuth.showVerification())
+                  else
+                    Redirect(so.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
                 } else
                   Redirect(failCall).flashing("error" -> "error.verify.user")
             }

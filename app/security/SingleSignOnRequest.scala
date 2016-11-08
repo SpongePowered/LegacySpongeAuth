@@ -4,7 +4,7 @@ import java.net.{URLDecoder, URLEncoder}
 import java.util.{Base64, UUID}
 
 import models.User
-import org.spongepowered.play.util.CryptoUtils._
+import org.spongepowered.play.security.CryptoUtils._
 import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.mvc.{Cookie, Request, Result, Session}
@@ -40,14 +40,14 @@ import scala.concurrent.duration.Duration
   * @param session  The Session of the request
   * @param cacheApi CacheApi instance
   */
-class SingleSignOn private (secret: String,
-                            val maxAge: Duration,
-                            val payload: String,
-                            val sig: String,
-                            var id: String = null,
-                            var ignoreSession: Boolean = false)
-                           (implicit session: Session,
-                            cacheApi: CacheApi) {
+class SingleSignOnRequest private (secret: String,
+                                   val maxAge: Duration,
+                                   val payload: String,
+                                   val sig: String,
+                                   var id: String = null,
+                                   var ignoreSession: Boolean = false)
+                                  (implicit session: Session,
+                                   cacheApi: CacheApi) {
 
   private val CharEncoding = "UTF-8"
 
@@ -106,7 +106,7 @@ class SingleSignOn private (secret: String,
     *
     * @return This instance
     */
-  def cache(): SingleSignOn = {
+  def cache(): SingleSignOnRequest = {
     this.id = UUID.randomUUID().toString
     this.cacheApi.set(id, this, this.maxAge)
     Logger.info("Cached SSO request with value: " + this)
@@ -123,7 +123,7 @@ class SingleSignOn private (secret: String,
 
 }
 
-object SingleSignOn {
+object SingleSignOnRequest {
 
   /**
     * Parses an incoming SSO request.
@@ -140,9 +140,9 @@ object SingleSignOn {
                             maxAge: Duration,
                             sso: Option[String],
                             sig: Option[String])
-                           (implicit session: Session, cache: CacheApi): Option[SingleSignOn] = {
+                           (implicit session: Session, cache: CacheApi): Option[SingleSignOnRequest] = {
     sso.flatMap(payload => sig.flatMap(sig => {
-      val signOn = new SingleSignOn(secret, maxAge, payload, sig)
+      val signOn = new SingleSignOnRequest(secret, maxAge, payload, sig)
       if (signOn.validateSignature()) {
         signOn.cache()
         Logger.info("Parsed SSO request of value: " + signOn)
@@ -154,20 +154,20 @@ object SingleSignOn {
     }))
   }
 
-  def addToResult(result: Result, sso: Option[SingleSignOn]): Result
+  def addToResult(result: Result, sso: Option[SingleSignOnRequest]): Result
   = sso.map(s => result.withCookies(Cookie("_sso", s.id, Some(s.maxAge.toSeconds.toInt)))).getOrElse(result)
 
   /**
-    * Retrieves a cached [[SingleSignOn]] for the Session of the request, if
+    * Retrieves a cached [[SingleSignOnRequest]] for the Session of the request, if
     * any.
     *
     * @param request  Incoming request
     * @param cache    CacheApi instance
     * @return         SSO instance, if any
     */
-  def bindFromRequest()(implicit request: Request[_], cache: CacheApi): Option[SingleSignOn] = {
+  def bindFromRequest()(implicit request: Request[_], cache: CacheApi): Option[SingleSignOnRequest] = {
     request.cookies.get("_sso").flatMap { token =>
-      val so = cache.get[SingleSignOn](token.value)
+      val so = cache.get[SingleSignOnRequest](token.value)
       if (so.isDefined)
         Logger.info("Retrieved SSO request from cache of value: " + so.get)
       so

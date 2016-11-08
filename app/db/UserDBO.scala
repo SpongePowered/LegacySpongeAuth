@@ -9,7 +9,7 @@ import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
 import form.{SettingsForm, SignUpForm, TSignUpForm}
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
-import org.spongepowered.play.util.CryptoUtils._
+import org.spongepowered.play.security.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
 import security.SpongeAuthConfig

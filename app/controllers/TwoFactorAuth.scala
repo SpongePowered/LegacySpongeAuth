@@ -5,11 +5,12 @@ import javax.inject.Inject
 import controllers.routes.{Application, TwoFactorAuth}
 import db.UserDBO
 import form.SpongeAuthForms
-import org.spongepowered.play.util.CryptoUtils._
+import org.spongepowered.play.security.CryptoUtils._
+import org.spongepowered.play.security.SingleSignOnConsumer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Controller
-import security.SpongeAuthConfig
+import play.api.mvc.{Controller, DiscardingCookie}
+import security.{SingleSignOnRequest, SpongeAuthConfig}
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 
@@ -21,7 +22,8 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
                                     totp: TotpAuth,
                                     qrRenderer: QrCodeRenderer,
                                     forms: SpongeAuthForms,
-                                    override val cache: CacheApi,
+                                    override val ssoConsumer: SingleSignOnConsumer,
+                                    implicit override val cache: CacheApi,
                                     implicit override val config: SpongeAuthConfig)
                                     extends Controller with I18nSupport with Actions {
 
@@ -109,8 +111,19 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
           FormError(TwoFactorAuth.showVerification(), hasErrors),
         code => {
           if (user.isTotpConfirmed && user.totpSecret.isDefined && this.users.verifyTotp(user, code)) {
-            this.users.setSessionAuthenticated(session)
-            Redirect(Application.showHome())
+            if (session.isAuthenticated) {
+              // If the user is already authenticated, that means they are
+              // just being re-verified. In that case we should just complete SSO
+              SingleSignOnRequest.bindFromRequest() match {
+                case None =>
+                  BadRequest
+                case Some(sso) =>
+                  Redirect(sso.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
+              }
+            } else {
+              this.users.setSessionAuthenticated(session)
+              Redirect(Application.showHome())
+            }
           } else {
             user = this.users.addFailedTotpAttempt(user)
             Redirect(TwoFactorAuth.showVerification()).withError("2fa.code.invalid")

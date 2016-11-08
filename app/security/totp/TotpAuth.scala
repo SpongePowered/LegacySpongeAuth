@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 import com.google.common.base.Preconditions._
 import org.apache.commons.codec.binary.Base32
-import org.spongepowered.play.util.CryptoUtils._
+import org.spongepowered.play.security.CryptoUtils._
 import security.SpongeAuthConfig
 
 import scala.concurrent.duration._
