@@ -133,4 +133,26 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
+  /**
+    * Redirects to the verification page to disable 2FA for the currently
+    * authenticated user. This uses internal SSO to verify the request.
+    *
+    * @return Redirect to verification
+    */
+  def showDisableTotpVerification() = Authenticated { implicit request =>
+    Redirect(this.ssoConsumer.getVerifyUrl("/2fa/disable/verified"))
+  }
+
+  /**
+    * Verifies the incoming SSO payload and disables 2FA if successful.
+    *
+    * @param sso  SSO payload
+    * @param sig  SSO signature
+    * @return     Redirect to settings
+    */
+  def disableTotp(sso: Option[String], sig: Option[String]) = VerifiedAction(sso, sig) { implicit request =>
+    this.users.setTotpConfirmed(request.user, confirmed = false)
+    Redirect(Application.showSettings())
+  }
+
 }

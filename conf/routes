@@ -26,6 +26,8 @@ GET     /2fa/setup                  @controllers.TwoFactorAuth.showSetup()
 POST    /2fa/setup                  @controllers.TwoFactorAuth.confirmTotp()
 GET     /2fa/verify                 @controllers.TwoFactorAuth.showVerification()
 POST    /2fa/verify                 @controllers.TwoFactorAuth.verifyTotp()
+GET     /2fa/disable                @controllers.TwoFactorAuth.showDisableTotpVerification()
+GET     /2fa/disable/verified       @controllers.TwoFactorAuth.disableTotp(sso: Option[String], sig: Option[String])
 
 GET     /settings                   @controllers.Application.showSettings()
 POST    /settings                   @controllers.Application.saveSettings()

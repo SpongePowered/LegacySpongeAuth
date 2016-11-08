@@ -91,7 +91,8 @@
                                     <div class="pull-right">
                                     @if(user.isTotpConfirmed) {
                                         <strong class="text-success">@messages("general.enabled")</strong>
-                                        <a href="#" class="btn btn-xs btn-default">
+                                        <a href="@routes.TwoFactorAuth.showDisableTotpVerification()"
+                                           class="btn btn-xs btn-default">
                                             <i class="fa fa-edit"></i>
                                         </a>
                                     } else {

@@ -46,8 +46,8 @@ trait Actions extends Requests with ActionHelpers {
   /** Looks up a user and returns NotFound if not found. */
   def WithUser(username: String) = withUser(username)
 
-  def VerifiedAction(username: String, sso: Option[String], sig: Option[String])
-  = WithUser(username) andThen verifiedAction(sso, sig)
+  def VerifiedAction(sso: Option[String], sig: Option[String])
+  = Authenticated andThen verifiedAction(sso, sig)
 
   /**
     * An implicit wrapper for a Result to provide some added functionality.

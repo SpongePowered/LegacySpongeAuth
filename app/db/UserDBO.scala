@@ -220,11 +220,11 @@ trait UserDBO {
     *
     * @param user User to set TOTP confirmed status of
     */
-  def setTotpConfirmed(user: User) = {
+  def setTotpConfirmed(user: User, confirmed: Boolean = true) = {
     checkNotNull(user, "null user", "")
     checkArgument(user.id.isDefined, "undefined user", "")
     val query = for { u <- this.users if u.id === user.id.get } yield u.isTotpConfirmed
-    await(db.run(query.update(true)))
+    await(db.run(query.update(confirmed)))
   }
 
   /**
