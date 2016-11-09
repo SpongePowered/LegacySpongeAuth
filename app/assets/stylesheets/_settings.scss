@@ -8,10 +8,14 @@
     .setting-content > form {
       position: absolute;
       bottom: 20px;
-      .btn {
-        width: 100%;
+      .btn-group {
         margin-top: 10px;
       }
     }
   }
+}
+
+.table-avatar td {
+  padding-right: 10px;
+  padding-top: 10px;
 }

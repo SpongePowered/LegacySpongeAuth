@@ -147,6 +147,14 @@ trait UserDBO {
   }
 
   /**
+    * Resets this user's avatar to the system default.
+    *
+    * @param user User to reset avatar of
+    * @return     Updated user
+    */
+  def resetAvatar(user: User): User = setAvatar(user, this.defaultAvatarUrl)
+
+  /**
     * Returns path to the specified user's avatar.
     *
     * @param user User to get avatar path of

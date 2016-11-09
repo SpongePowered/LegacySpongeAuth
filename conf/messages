@@ -101,6 +101,7 @@ email.signature = Best regards,<br/>SpongePowered
 settings.title = Account settings
 settings.resetPassword = Reset password
 settings.save = Save changes
+settings.avatar.gravatar = Use my <a href="https://gravatar.com">Gravatar</a>
 
 user.email = Email
 user.username = Username
@@ -112,4 +113,4 @@ user.2fa = Two-Factor Authentication
 user.password = Password
 user.avatar = Profile picture
 user.avatar.url = Update by URL&hellip;
-user.avatar.reset = Reset
+user.avatar.clear = Clear

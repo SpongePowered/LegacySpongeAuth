@@ -75,13 +75,19 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
       hasErrors =>
         FormError(routes.Application.showSignUp(None, None), hasErrors),
       formData => {
-        // Create the user and send confirmation email
+        // Set the user's default avatar
         var avatarUrl = this.users.defaultAvatarUrl
         if (this.gravatar.exists(formData.email))
           avatarUrl = this.gravatar.get(formData.email)
-        val user = this.users.createUser(formData, avatarUrl)
-        val confirmation = this.users.createEmailConfirmation(user)
-        this.mailer.push(this.emails.confirmation(confirmation))
+
+        // Create the user and send verification email
+        val verificationRequired = this.config.security.getBoolean("email.requireVerification").get
+        val user = this.users.createUser(formData, avatarUrl, verified = !verificationRequired)
+        if (verificationRequired) {
+          val confirmation = this.users.createEmailConfirmation(user)
+          this.mailer.push(this.emails.confirmation(confirmation))
+        }
+
         if (formData.setup2fa)
           Redirect(routes.TwoFactorAuth.showSetup()).remembering(user)
         else

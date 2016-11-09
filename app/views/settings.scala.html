@@ -32,10 +32,25 @@
                             </div>
                             <div class="setting-content">
                                 @helper.form(action = routes.Settings.updateAvatar()) {
-                                    <input name="avatar-file" type="file" />
-                                    <button type="button" class="btn btn-reset btn-info">
-                                        @messages("user.avatar.reset")
-                                    </button>
+                                    <table class="table-avatar">
+                                        <tr>
+                                            <td><input type="radio" name="avatar-method" value="file" checked /></td>
+                                            <td><input name="avatar-file" type="file" /></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="radio" name="avatar-method" value="gravatar" /></td>
+                                            <td>@Html(messages("settings.avatar.gravatar"))</td>
+                                        </tr>
+                                    </table>
+
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-reset btn-default">
+                                            @messages("user.avatar.clear")
+                                        </button>
+                                        <button type="button" class="btn btn-submit btn-info">
+                                            @messages("general.submit")
+                                        </button>
+                                    </div>
                                 }
                             </div>
                             <div class="clearfix"></div>

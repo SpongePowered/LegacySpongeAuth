@@ -8,7 +8,7 @@ $(function() {
         $('.user-avatar').attr('src', src + '?' + new Date().getTime());
     }
 
-    setting.find('input[name="avatar-file"]').change(function() {
+    setting.find('.btn-submit').click(function() {
         spinner.show();
         var formData = new FormData(setting.find('form')[0]);
         $.ajax({
@@ -20,8 +20,8 @@ $(function() {
             complete: function() {
                 spinner.hide();
             },
-            success: function() {
-               reloadAvatarImg('/avatars/' + username);
+            success: function(json) {
+                reloadAvatarImg(json['avatar_url']);
             }
         })
     });

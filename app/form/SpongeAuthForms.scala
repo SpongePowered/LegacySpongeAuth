@@ -71,6 +71,11 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
     "irc-nick" -> ircNick
   )(SettingsForm.apply)(SettingsForm.unapply))
 
+  /**
+    * Submits an avatar update for a user.
+    */
+  lazy val UpdateAvatar = Form(single("avatar-method" -> nonEmptyText))
+
   final class Api {
 
     /**

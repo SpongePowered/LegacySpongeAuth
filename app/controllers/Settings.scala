@@ -59,12 +59,20 @@ final class Settings @Inject()(override val messagesApi: MessagesApi,
     * @return BadRequest if no file, Ok if successful
     */
   def updateAvatar() = Authenticated { implicit request =>
-    request.body.asMultipartFormData.get.file("avatar-file") match {
-      case None =>
-        BadRequest
-      case Some(file) =>
-        this.users.setAvatar(request.user, file.filename, file.ref.file)
-        Ok
+    var user = request.user
+    this.forms.UpdateAvatar.bindFromRequest().get match {
+      case "file" => request.body.asMultipartFormData.get.file("avatar-file") match {
+        case None =>
+          BadRequest
+        case Some(file) =>
+          user = this.users.setAvatar(user, file.filename, file.ref.file)
+          Ok(toJson(user))
+      }
+      case "gravatar" =>
+        val email = user.email
+        if (this.gravatar.exists(email))
+          user = this.users.setAvatar(user, this.gravatar.get(email))
+        Ok(toJson(user))
     }
   }
 
@@ -74,12 +82,8 @@ final class Settings @Inject()(override val messagesApi: MessagesApi,
     * @return JSON user
     */
   def resetAvatar() = Authenticated { implicit request =>
-    var avatarUrl = this.users.defaultAvatarUrl
-    var user = request.user
-    val email = user.email
-    if (this.gravatar.exists(email))
-      avatarUrl = this.gravatar.get(email)
-    user = this.users.setAvatar(user, avatarUrl)
+    val user = request.user
+    this.users.resetAvatar(user)
     Ok(toJson(user))
   }
 

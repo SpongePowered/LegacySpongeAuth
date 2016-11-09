@@ -6,6 +6,23 @@ import getpass
 import sys
 from datetime import datetime
 
+
+def get_usernames(userIds):
+    userMap = {}
+    for userId in userIds:
+        query = "SELECT username FROM users WHERE id = %d;" % userId[0]
+        print(query)
+        curIn.execute(query)
+        username = curIn.fetchone()
+        userMap[userId[0]] = username[0]
+    return userMap
+
+
+def commitOut():
+    confirm = input("Commit changes? (y/n): ")
+    if confirm.lower() == 'y':
+        connOut.commit()
+
 # Connect to our input database
 dbIn = input("Input database: ")
 hostIn = input("Host: ")
@@ -67,13 +84,10 @@ if importUsers:
     importStmt += ';'
     print(importStmt)
     curOut.execute(importStmt)
-
-    confirm = input("Commit changes? (y/n): ")
-    if confirm.lower() == 'y':
-        connOut.commit()
+    commitOut()
 
 # Import user fields?
-importUserFields = len(sys.argv) > 1 and sys.argv[1] == "--customFields"
+importUserFields = len(sys.argv) > 1 and sys.argv[1] == '--customFields'
 if importUserFields:
     # Map the custom field names to our corresponding output name
     query = "SELECT DISTINCT name FROM user_custom_fields;"
@@ -90,13 +104,7 @@ if importUserFields:
     print(query)
     curIn.execute(query)
     userIds = curIn.fetchall()
-    userMap = {}
-    for userId in userIds:
-        query = "SELECT username FROM users WHERE id = %d;" % userId[0]
-        print(query)
-        curIn.execute(query)
-        username = curIn.fetchone()
-        userMap[userId[0]] = username[0]
+    userMap = get_usernames(userIds)
 
     # Import the fields
     query = "SELECT * FROM user_custom_fields;"
@@ -112,9 +120,35 @@ if importUserFields:
         print(importStmt)
         curOut.execute(importStmt)
 
-    confirm = input("Commit changes? (y/n): ")
-    if confirm.lower() == 'y':
-        connOut.commit()
+    commitOut()
+
+importAvatars = len(sys.argv) > 1 and sys.argv[1] == '--avatars'
+if importAvatars:
+    query = "SELECT custom_upload_id FROM user_avatars WHERE custom_upload_id IS NOT null;"
+    print(query)
+    curIn.execute(query)
+
+    uploadIds = curIn.fetchall()
+    uids = ()
+    for uploadId in uploadIds:
+        uids += (uploadId[0],)
+
+    query = "SELECT user_id, url FROM uploads WHERE id IN (%s)" % uids
+    print(query)
+    curIn.execute(query)
+    uploads = curIn.fetchall()
+
+    for upload in uploads:
+        query = "SELECT username FROM users WHERE id = %s;" % upload['user_id']
+        print(query)
+        curIn.execute(query)
+        username = curIn.fetchone()[0]
+        print(username)
+        update = "UPDATE users SET avatar_url = '%s' WHERE username = '%s';" % (upload['url'], username)
+        print(update)
+        curOut.execute(update)
+
+    commitOut()
 
 # Clean up
 curIn.close()
