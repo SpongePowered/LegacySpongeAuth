@@ -7,17 +7,6 @@ import sys
 from datetime import datetime
 
 
-def get_usernames(userIds):
-    userMap = {}
-    for userId in userIds:
-        query = "SELECT username FROM users WHERE id = %d;" % userId[0]
-        print(query)
-        curIn.execute(query)
-        username = curIn.fetchone()
-        userMap[userId[0]] = username[0]
-    return userMap
-
-
 def commitOut():
     confirm = input("Commit changes? (y/n): ")
     if confirm.lower() == 'y':
@@ -104,7 +93,13 @@ if importUserFields:
     print(query)
     curIn.execute(query)
     userIds = curIn.fetchall()
-    userMap = get_usernames(userIds)
+    userMap = {}
+    for userId in userIds:
+        query = "SELECT username FROM users WHERE id = %d;" % userId[0]
+        print(query)
+        curIn.execute(query)
+        username = curIn.fetchone()
+        userMap[userId[0]] = username[0]
 
     # Import the fields
     query = "SELECT * FROM user_custom_fields;"
@@ -138,13 +133,13 @@ if importAvatars:
     curIn.execute(query)
     uploads = curIn.fetchall()
 
+    rootUrl = input("Root URL for uploads: ")
     for upload in uploads:
         query = "SELECT username FROM users WHERE id = %s;" % upload['user_id']
         print(query)
         curIn.execute(query)
         username = curIn.fetchone()[0]
-        print(username)
-        update = "UPDATE users SET avatar_url = '%s' WHERE username = '%s';" % (upload['url'], username)
+        update = "UPDATE users SET avatar_url = '%s' WHERE username = '%s';" % (rootUrl + upload['url'], username)
         print(update)
         curOut.execute(update)
 

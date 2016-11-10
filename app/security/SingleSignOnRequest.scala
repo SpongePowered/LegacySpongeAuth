@@ -145,7 +145,6 @@ object SingleSignOnRequest {
       val signOn = new SingleSignOnRequest(secret, maxAge, payload, sig)
       if (signOn.validateSignature()) {
         signOn.cache()
-        Logger.info("Parsed SSO request of value: " + signOn)
         Some(signOn)
       } else {
         Logger.warn("Could not verify authenticity of SSO payload: " + signOn)
@@ -167,10 +166,7 @@ object SingleSignOnRequest {
     */
   def bindFromRequest()(implicit request: Request[_], cache: CacheApi): Option[SingleSignOnRequest] = {
     request.cookies.get("_sso").flatMap { token =>
-      val so = cache.get[SingleSignOnRequest](token.value)
-      if (so.isDefined)
-        Logger.info("Retrieved SSO request from cache of value: " + so.get)
-      so
+      cache.get[SingleSignOnRequest](token.value)
     }
   }
 
