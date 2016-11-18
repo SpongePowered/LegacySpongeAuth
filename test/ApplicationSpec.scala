@@ -120,6 +120,74 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
       }
     }
 
+    "showVerification" should {
+      "redirect when unauthenticated" in {
+        val verify = route(this.app, FakeRequest(GET, "/verify")).get
+        status(verify) must equalTo(SEE_OTHER)
+      }
+
+      "fail without SSO request" in {
+        val verify = route(this.app, FakeRequest(GET, "/verify").withSession(authToken.value)).get
+        status(verify) must equalTo(BAD_REQUEST)
+      }
+
+      "succeed with SSO request" in {
+        val verify = route(this.app, FakeRequest(GET, "/verify" + this.ssoQuery).withSession(authToken.value)).get
+        status(verify) must equalTo(OK)
+      }
+    }
+
+    "verify" should {
+      "redirect when unauthenticated" in {
+        val verify = route(this.app, FakeRequest(POST, "/verify")).get
+        status(verify) must equalTo(SEE_OTHER)
+      }
+
+      "fail without SSO request" in {
+        val verify = route(this.app, FakeRequest(GET, "/verify").withSession(authToken.value)).get
+        status(verify) must equalTo(BAD_REQUEST)
+      }
+
+      "fail with invalid username" in {
+        val showVerify = route(this.app, FakeRequest(GET, "/verify" + this.ssoQuery).withSession(authToken.value)).get
+        status(showVerify) must equalTo(OK)
+        val ssoToken = getSSOToken(showVerify).get
+
+        val verify = doLogIn(FakeRequest(POST, "/verify")
+          .withSession(authToken.value)
+          .withSSO(ssoToken),
+          "fubar", FakeUser.password.get)
+        status(verify) must equalTo(SEE_OTHER)
+        assertHasError(verify, "error.verify.user")
+      }
+
+      "fail with invalid password" in {
+        val showVerify = route(this.app, FakeRequest(GET, "/verify" + this.ssoQuery).withSession(authToken.value)).get
+        status(showVerify) must equalTo(OK)
+        val ssoToken = getSSOToken(showVerify).get
+
+        val verify = doLogIn(FakeRequest(POST, "/verify")
+          .withSession(authToken.value)
+          .withSSO(ssoToken),
+          FakeUser.username, "fubar")
+        status(verify) must equalTo(SEE_OTHER)
+        assertHasError(verify, "error.verify.user")
+      }
+
+      "succeed with valid credentials" in {
+        val showVerify = route(this.app, FakeRequest(GET, "/verify" + this.ssoQuery).withSession(authToken.value)).get
+        status(showVerify) must equalTo(OK)
+        val ssoToken = getSSOToken(showVerify).get
+
+        val verify = doLogIn(FakeRequest(POST, "/verify")
+          .withSession(authToken.value)
+          .withSSO(ssoToken),
+          FakeUser.username, FakeUser.password.get)
+        status(verify) must equalTo(SEE_OTHER)
+        flash(verify).get("error").isEmpty must equalTo(true)
+      }
+    }
+
     "logIn" should {
       "fail with invalid username" in {
         val logIn = doLogIn(FakeRequest(POST, "/login"), "urmom", FakeUser.password.get)
@@ -133,7 +201,7 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
         assertHasError(logIn, "error.verify.user")
       }
 
-      "success" in new WithServer {
+      "succeed with valid credentials" in new WithServer {
         assertAuthenticated(doLogIn(FakeRequest(POST, "/login"), FakeUser.username, FakeUser.password.get))
       }
     }
