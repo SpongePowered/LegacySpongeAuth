@@ -19,23 +19,23 @@ import security.pwd.Password
   * @param ghUsername       GitHub username
   * @param totpSecret       The user's TOTP secret if enabled (encrypted)
   */
-case class User private (id: Option[Int] = None,
-                         createdAt: Timestamp,
-                         joinDate: Timestamp,
-                         email: String,
-                         isEmailConfirmed: Boolean = false,
-                         username: String,
-                         avatarUrl: String,
-                         password: Option[String],
-                         salt: Option[String],
-                         isAdmin: Boolean = false,
-                         mcUsername: Option[String] = None,
-                         ircNick: Option[String] = None,
-                         ghUsername: Option[String] = None,
-                         totpSecret: Option[String] = None,
-                         isTotpConfirmed: Boolean = false,
-                         failedTotpAttempts: Int = 0,
-                         deletedAt: Option[Timestamp] = None) {
+case class User(id: Option[Int] = None,
+                createdAt: Timestamp,
+                joinDate: Timestamp,
+                email: String,
+                isEmailConfirmed: Boolean = false,
+                username: String,
+                avatarUrl: String,
+                password: Option[String],
+                salt: Option[String],
+                isAdmin: Boolean = false,
+                mcUsername: Option[String] = None,
+                ircNick: Option[String] = None,
+                ghUsername: Option[String] = None,
+                totpSecret: Option[String] = None,
+                isTotpConfirmed: Boolean = false,
+                failedTotpAttempts: Int = 0,
+                deletedAt: Option[Timestamp] = None) {
 
   def this(formData: TSignUpForm, createdAt: Timestamp, avatarUrl: String, pwd: Option[Password]) = this(
     createdAt = createdAt,

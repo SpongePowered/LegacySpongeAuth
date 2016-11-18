@@ -1,5 +1,7 @@
 package backend
 
+import java.sql.Timestamp
+import java.util.Date
 import javax.inject.Inject
 
 import db.UserDBO
@@ -21,6 +23,7 @@ final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfi
   override val maxPasswordResetAge: Long = 10000
   override val encryptionSecret = this.config.play.getString("crypto.secret").get
   override val passwords: PasswordFactory = new PasswordFactory {}
+  override val defaultAvatarUrl: String = ""
 }
 
 object MockUserDBO {
@@ -30,8 +33,11 @@ object MockUserDBO {
 }
 
 object FakeUser extends User(
+  createdAt = new Timestamp(new Date().getTime),
+  joinDate = new Timestamp(new Date().getTime),
   email = "spongie@spongepowered.org",
   username = "Spongie",
-  password = "wubalubadubdub",
-  salt = ""
+  avatarUrl = null,
+  password = Some("wubalubadubdub"),
+  salt = Some("")
 )

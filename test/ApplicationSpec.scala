@@ -122,7 +122,7 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
 
     "logIn" should {
       "fail with invalid username" in {
-        val logIn = doLogIn(FakeRequest(POST, "/login"), "urmom", FakeUser.password)
+        val logIn = doLogIn(FakeRequest(POST, "/login"), "urmom", FakeUser.password.get)
         status(logIn) must equalTo(SEE_OTHER)
         assertHasError(logIn, "error.verify.user")
       }
@@ -134,7 +134,7 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
       }
 
       "success" in new WithServer {
-        assertAuthenticated(doLogIn(FakeRequest(POST, "/login"), FakeUser.username, FakeUser.password))
+        assertAuthenticated(doLogIn(FakeRequest(POST, "/login"), FakeUser.username, FakeUser.password.get))
       }
     }
 

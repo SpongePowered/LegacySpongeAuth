@@ -1,8 +1,8 @@
 import backend.{FakeUser, MockCacheApi, MockMailer, MockUserDBO}
 import db.UserDBO
-import mail.Mailer
 import models.EmailConfirmation
 import org.specs2.mutable._
+import org.spongepowered.play.mail.Mailer
 import play.api.Mode
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
@@ -11,8 +11,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Cookie, Security}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import security.SpongeAuthConfig
-import security.sso.SingleSignOn
+import security.{SingleSignOnRequest, SpongeAuthConfig}
 
 import scala.concurrent.Future
 
@@ -27,9 +26,11 @@ trait ApplicationHelpers extends Specification {
     .eagerlyLoaded()
     .additionalRouter(this.sso.Router)
     .in(Mode.Test)
+    .configure("security.email.requireVerification" -> true)
     .build()
 
   val injector = this.app.injector
+
   val config = this.injector.instanceOf[SpongeAuthConfig]
   val cache = this.injector.instanceOf[CacheApi]
   val messages = this.injector.instanceOf[MessagesApi]
@@ -59,7 +60,7 @@ trait ApplicationHelpers extends Specification {
   def doSignUp(request: FakeRequest[_],
                email: String = FakeUser.email,
                username: String = FakeUser.username,
-               password: String = FakeUser.password) = {
+               password: String = FakeUser.password.get) = {
     // Sends a sign up request
     route(this.app, request.withFormUrlEncodedBody(
       "email" -> email,
@@ -128,7 +129,7 @@ trait ApplicationHelpers extends Specification {
     status(homeRedirect) must equalTo(OK)
     contentAsString(homeRedirect) must contain(sso.ConsumeSSO)
 
-    val signOn = this.cache.get[SingleSignOn](ssoToken)
+    val signOn = this.cache.get[SingleSignOnRequest](ssoToken)
     signOn.isDefined must equalTo(true)
     val user = getSession(token.value).get.user
     val finalRedirect = route(this.app, FakeRequest(GET, signOn.get.getRedirect(user))).get
