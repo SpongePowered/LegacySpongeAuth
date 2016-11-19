@@ -11,6 +11,7 @@ final class SpongeAuthConfig @Inject()(config: Configuration) {
 
   lazy val root = this.config
   lazy val play = this.root.getConfig("play").get
+  lazy val app = this.root.getConfig("application").get
   lazy val sponge = this.root.getConfig("sponge").get
   lazy val security = this.root.getConfig("security").get
   lazy val sso = this.security.getConfig("sso").get

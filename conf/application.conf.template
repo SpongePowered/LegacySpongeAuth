@@ -6,6 +6,8 @@ play {
     modules.enabled         +=  "org.spongepowered.play.SpongeModule"
 }
 
+application.dateFormat = "MMM dd, yyyy"
+
 security {
     username.minLen     =   3
     username.maxLen     =   20

@@ -1,8 +1,14 @@
 @import security.SpongeAuthConfig
+@import java.util.Date
+@import java.text.SimpleDateFormat
 @(user: User)(implicit config: SpongeAuthConfig, messages: Messages, request: Request[_], flash: Flash)
 
 @showResetPassword = @{
     routes.Application.logOut(Some(routes.Application.showPasswordReset(None).path))
+}
+
+@prettifyDate(date: Date) = @{
+    new SimpleDateFormat(config.app.getString("dateFormat").get).format(date)
 }
 
 @bootstrap.layout(messages("settings.title")) {
@@ -70,7 +76,7 @@
 
                         <div class="setting">
                             <div class="setting-description">@messages("user.joinDate")</div>
-                            <div class="setting-content"><strong>@user.joinDate</strong></div>
+                            <div class="setting-content"><strong>@prettifyDate(user.joinDate)</strong></div>
                             <div class="clearfix"></div>
                         </div>
 
