@@ -1,33 +1,32 @@
 @import 'utils';
 
 // left nav
+@import 'topbar';
 
-.navbar-nav {
-  margin-top: 0;
+#topbar {
+  font-size: 15px;
+
+  .container {
+    max-width: 1110px;
+  }
+
+  a.logo {
+    color: $sponge_yellow;
+    outline: 0;
+
+    &:hover, &:focus, &:active, &.active {
+      color: $sponge_yellow;
+      outline: 0;
+    }
+  }
 }
 
-.main-dropdown:hover {
-  display: block;
-}
+// right nav
 
-.main-dropdown {
-  width: 100%;
-  li.active:hover > a { background-color: #d2af08; }
-  i { margin-right: 1em; }
-}
-
-.navbar-main {
-  @include box-shadow5(0, 2px, 4px, -1px, rgba(0, 0, 0, 0.25));
-  background-color: #333;
-  padding-top: 1px;
-  height: 63px;
-  min-height: 63px;
-  li.dropdown:hover > ul.dropdown-menu { display: block; }
-  .navbar-left li > a { @include padding-vert(10px, 12px); }
-}
-
-.dropdown-sponge:hover {
-  background-color: #222;
+.navbar-inverse .navbar-nav > .open > a {
+   &, &:hover, &:focus, &:active {
+     background: transparent;
+  }
 }
 
 .navbar-nav > li > .main-dropdown, .user-dropdown {
@@ -52,8 +51,6 @@
     margin-left: 5px;
   }
 }
-
-// right nav
 
 .navbar-main {
   .navbar-right > li > a { padding: 0; }
@@ -99,11 +96,11 @@
 }
 
 .user-controls {
-  @include padding-vert(5px, 16px);
+  @include padding-vert(5px, 17px);
 }
 
 .new-controls {
-  @include padding-vert(10px, 17px);
+  @include padding-vert(10px, 19px);
 }
 
 .user-avatar:hover {

@@ -16,6 +16,7 @@ general.submit          =   Submit
 general.continue        =   Continue
 general.enabled         =   Enabled
 general.disabled        =   Disabled
+general.projectName     =   Sponge
 
 error.minLength.password    =   Password too short.
 error.maxLength.password    =   Password too long.
