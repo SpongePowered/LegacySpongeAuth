@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.Date
 import javax.inject.Inject
 
-import db.UserDBO
+import db.UserDAO
 import models.User
 import play.api.db.slick.DatabaseConfigProvider
 import play.db.NamedDatabase
@@ -13,12 +13,12 @@ import security.pwd.PasswordFactory
 import security.totp.TotpAuth
 import slick.driver.JdbcProfile
 
-final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfigProvider,
+final class MockUserDAO @Inject()(@NamedDatabase("test") provider: DatabaseConfigProvider,
                                   override val totp: TotpAuth,
-                                  config: SpongeAuthConfig) extends UserDBO {
+                                  config: SpongeAuthConfig) extends UserDAO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
-  override val maxSessionAge = MockUserDBO.maxSessionAge
+  override val maxSessionAge = MockUserDAO.maxSessionAge
   override val maxEmailConfirmationAge: Long = 10000
   override val maxPasswordResetAge: Long = 10000
   override val encryptionSecret = this.config.play.getString("crypto.secret").get
@@ -26,7 +26,7 @@ final class MockUserDBO @Inject()(@NamedDatabase("test") provider: DatabaseConfi
   override val defaultAvatarUrl: String = ""
 }
 
-object MockUserDBO {
+object MockUserDAO {
 
   var maxSessionAge = 60 * 60
 

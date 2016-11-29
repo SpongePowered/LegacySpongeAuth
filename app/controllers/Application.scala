@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import db.UserDBO
+import db.UserDAO
 import external.GravatarApi
 import form.SpongeAuthForms
 import mail.Emails
@@ -29,7 +29,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   status: StatusZ,
                                   gravatar: GravatarApi,
                                   override val ssoConsumer: SingleSignOnConsumer,
-                                  implicit override val users: UserDBO,
+                                  implicit override val users: UserDAO,
                                   implicit override val cache: CacheApi,
                                   implicit override val config: SpongeAuthConfig)
                                   extends Controller with I18nSupport with Actions {

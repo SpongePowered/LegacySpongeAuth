@@ -2,7 +2,7 @@ package models
 
 import java.sql.Timestamp
 
-import db.UserDBO
+import db.UserDAO
 import db.schema.EmailConfirmationTable
 
 /**
@@ -26,9 +26,9 @@ case class EmailConfirmation(id: Option[Int],
   /**
     * Returns the [[User]] associated with this EmailConfirmation.
     *
-    * @param users  [[UserDBO]] instance
+    * @param users [[UserDAO]] instance
     * @return       Associated user
     */
-  def user(implicit users: UserDBO) = users.withEmail(this.email).get
+  def user(implicit users: UserDAO) = users.withEmail(this.email).get
 
 }

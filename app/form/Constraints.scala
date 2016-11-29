@@ -1,6 +1,6 @@
 package form
 
-import db.UserDBO
+import db.UserDAO
 import db.schema.user.UserTable
 import external.{GitHubApi, MojangApi}
 import play.api.data.Forms._
@@ -14,7 +14,7 @@ import slick.driver.PostgresDriver.api._
 trait Constraints {
 
   val config: SpongeAuthConfig
-  val users: UserDBO
+  val users: UserDAO
   val mojang: MojangApi
   val gitHub: GitHubApi
 

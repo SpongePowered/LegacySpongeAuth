@@ -2,7 +2,7 @@ package models
 
 import java.sql.Timestamp
 
-import db.UserDBO
+import db.UserDAO
 import db.schema.PasswordResetTable
 
 case class PasswordReset(override val id: Option[Int],
@@ -14,6 +14,6 @@ case class PasswordReset(override val id: Option[Int],
   override type M = PasswordReset
   override type T = PasswordResetTable
 
-  def user(implicit users: UserDBO): User = users.withEmail(this.email).get
+  def user(implicit users: UserDAO): User = users.withEmail(this.email).get
 
 }

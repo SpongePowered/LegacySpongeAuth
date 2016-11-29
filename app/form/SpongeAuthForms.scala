@@ -2,7 +2,7 @@ package form
 
 import javax.inject.Inject
 
-import db.UserDBO
+import db.UserDAO
 import external.{GitHubApi, MojangApi}
 import form.api.CreateUserForm
 import play.api.data.Form
@@ -13,7 +13,7 @@ import security.SpongeAuthConfig
   * A collection of forms used by Sponge SSO.
   */
 final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
-                                      override implicit val users: UserDBO,
+                                      override implicit val users: UserDAO,
                                       override val mojang: MojangApi,
                                       override val gitHub: GitHubApi) extends Constraints {
 

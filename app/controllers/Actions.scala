@@ -1,6 +1,6 @@
 package controllers
 
-import db.UserDBO
+import db.UserDAO
 import models.{User, Session => DbSession}
 import org.spongepowered.play.security.SingleSignOnConsumer
 import org.spongepowered.play.util.ActionHelpers
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
   */
 trait Actions extends Requests with ActionHelpers {
 
-  val users: UserDBO
+  val users: UserDAO
   val config: SpongeAuthConfig
   val ssoConsumer: SingleSignOnConsumer
 

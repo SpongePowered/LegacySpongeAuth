@@ -1,4 +1,4 @@
-import backend.{FakeUser, MockUserDBO}
+import backend.{FakeUser, MockUserDAO}
 import org.apache.commons.lang3.RandomStringUtils.{randomAlphanumeric => randomString}
 import org.junit.runner._
 import org.specs2.mutable._
@@ -38,8 +38,8 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
       }
 
       "delete expired sessions" in new WithServer {
-        val ogAge = MockUserDBO.maxSessionAge
-        MockUserDBO.maxSessionAge = 1
+        val ogAge = MockUserDAO.maxSessionAge
+        MockUserDAO.maxSessionAge = 1
 
         // create the user
         val signUp = doSignUp(FakeRequest(POST, "/signup"))
@@ -61,7 +61,7 @@ final class ApplicationSpec extends Specification with ApplicationHelpers {
         session.isEmpty must equalTo(true)
         ApplicationSpec.this.users.removeAll()
 
-        MockUserDBO.maxSessionAge = ogAge
+        MockUserDAO.maxSessionAge = ogAge
       }
     }
 

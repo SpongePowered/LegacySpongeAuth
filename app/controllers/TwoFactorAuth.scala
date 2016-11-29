@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import db.UserDBO
+import db.UserDAO
 import form.SpongeAuthForms
 import org.spongepowered.play.security.CryptoUtils._
 import org.spongepowered.play.security.SingleSignOnConsumer
@@ -17,7 +17,7 @@ import security.totp.qr.QrCodeRenderer
   * Handles two-factor authentication based functions of the application.
   */
 final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
-                                    override implicit val users: UserDBO,
+                                    override implicit val users: UserDAO,
                                     totp: TotpAuth,
                                     qrRenderer: QrCodeRenderer,
                                     forms: SpongeAuthForms,

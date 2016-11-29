@@ -3,7 +3,7 @@ package controllers
 import javax.inject.Inject
 
 import api.SpongeAuthWrites
-import db.UserDBO
+import db.UserDAO
 import external.GravatarApi
 import form.SpongeAuthForms
 import org.apache.commons.io.FileUtils
@@ -15,7 +15,7 @@ import play.api.mvc.{Action, Controller}
 import security.SpongeAuthConfig
 
 final class Settings @Inject()(override val messagesApi: MessagesApi,
-                               override val users: UserDBO,
+                               override val users: UserDAO,
                                implicit override val config: SpongeAuthConfig,
                                override val ssoConsumer: SingleSignOnConsumer,
                                override val cache: CacheApi,

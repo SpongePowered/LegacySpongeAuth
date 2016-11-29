@@ -1,6 +1,6 @@
 package form
 
-import db.UserDBO
+import db.UserDAO
 import slick.driver.PostgresDriver.api._
 import db.schema.user.UserTable
 import models.User
@@ -8,7 +8,7 @@ import models.User
 case class SettingsForm(mcUsername: Option[String],
                         ghUsername: Option[String],
                         ircNick: Option[String])
-                       (implicit users: UserDBO) {
+                       (implicit users: UserDAO) {
 
   private def checkSetting(user: User, rep: UserTable => Rep[String], value: Option[String]): Boolean = {
     value.isEmpty || this.users.isFieldUnique(rep, value.get, excluding = user)

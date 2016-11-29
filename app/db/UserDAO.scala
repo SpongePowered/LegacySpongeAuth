@@ -32,7 +32,7 @@ import scala.languageFeature.implicitConversions
 /**
   * Contains all [[User]] information.
   */
-trait UserDBO {
+trait UserDAO {
 
   val dbConfig: DatabaseConfig[JdbcProfile]
   val users = TableQuery[UserTable]
@@ -553,10 +553,10 @@ trait UserDBO {
 
 }
 
-final class UserDBOImpl @Inject()(provider: DatabaseConfigProvider,
+final class UserDAOImpl @Inject()(provider: DatabaseConfigProvider,
                                   config: SpongeAuthConfig,
                                   override val passwords: PasswordFactory,
-                                  override val totp: TotpAuth) extends UserDBO {
+                                  override val totp: TotpAuth) extends UserDAO {
 
   override val dbConfig = this.provider.get[JdbcProfile]
   override val timeout = this.config.db.getLong("timeout").get.millis

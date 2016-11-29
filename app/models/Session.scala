@@ -2,7 +2,7 @@ package models
 
 import java.sql.Timestamp
 
-import db.UserDBO
+import db.UserDAO
 import db.schema.SessionTable
 
 /**
@@ -28,9 +28,9 @@ case class Session(id: Option[Int] = None,
   /**
     * Returns the [[User]] this Session is associated with.
     *
-    * @param users  [[UserDBO]] instance
+    * @param users [[UserDAO]] instance
     * @return       Associated User
     */
-  def user(implicit users: UserDBO) = users.withName(this.username).get
+  def user(implicit users: UserDAO) = users.withName(this.username).get
 
 }

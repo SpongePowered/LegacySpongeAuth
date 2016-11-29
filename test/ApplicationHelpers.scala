@@ -1,5 +1,5 @@
-import backend.{FakeUser, MockCacheApi, MockMailer, MockUserDBO}
-import db.UserDBO
+import backend.{FakeUser, MockCacheApi, MockMailer, MockUserDAO}
+import db.UserDAO
 import models.EmailConfirmation
 import org.specs2.mutable._
 import org.spongepowered.play.mail.Mailer
@@ -21,7 +21,7 @@ trait ApplicationHelpers extends Specification {
 
   val app = GuiceApplicationBuilder()
     .overrides(bind[CacheApi].to[MockCacheApi])
-    .overrides(bind[UserDBO].to[MockUserDBO])
+    .overrides(bind[UserDAO].to[MockUserDAO])
     .overrides(bind[Mailer].to[MockMailer])
     .eagerlyLoaded()
     .additionalRouter(this.sso.Router)
@@ -37,7 +37,7 @@ trait ApplicationHelpers extends Specification {
 
   this.sso.secret = this.config.sso.getString("secret").get
 
-  implicit val users = this.injector.instanceOf[UserDBO]
+  implicit val users = this.injector.instanceOf[UserDAO]
   val mailer = this.injector.instanceOf[Mailer].asInstanceOf[MockMailer]
 
   val ssoQuery = this.sso.getQuery()
