@@ -6,7 +6,11 @@ play {
     modules.enabled         +=  "org.spongepowered.play.SpongeModule"
 }
 
-application.dateFormat = "MMM dd, yyyy"
+application {
+    dateFormat = "MMM dd, yyyy"
+    baseUrl = "http://localhost:9000"
+    baseUrl = ${?BASE_URL}
+}
 
 security {
     username.minLen     =   3
@@ -25,11 +29,11 @@ security {
     sso {
         debug          =   false // disable for production
         secret         =   "changeme"
+        secret         =   ${?SSO_SECRET}
         maxAge         =   600000 // 10 minutes (millis)
-        loginUrl       =   "http://localhost:9000/login"
-        signupUrl      =   "http://localhost:9000/signup"
-        verifyUrl      =   "http://localhost:9000/verify"
-        secret         =   "changeme"
+        loginUrl       =   ${application.baseUrl}"/login"
+        signupUrl      =   ${application.baseUrl}"/signup"
+        verifyUrl      =   ${application.baseUrl}"/verify"
         timeout        =   10000
     }
 
@@ -46,6 +50,7 @@ security {
     }
 
     api.key = "changeme"
+    api.key = ${?API_KEY}
 }
 
 db.timeout = 10000 // 10 seconds (millis)
@@ -86,8 +91,10 @@ slick.dbs {
     default {
         driver        =   "slick.driver.PostgresDriver$"
         db.driver     =   "org.postgresql.Driver"
-        db.url        =   "jdbc:postgresql://localhost/spongesso"
+        db.url        =   "jdbc:postgresql://localhost/spongeauth"
+        db.url        =   ${?JDBC_DATABASE_URL}
         db.user       =   "root"
+        db.user       =   ${?JDBC_DATABASE_USER}
         db.password   =   ""
         db.password   =   ${?JDBC_DATABASE_PASSWORD}
     }
@@ -97,7 +104,9 @@ slick.dbs {
         driver        =   "slick.driver.PostgresDriver$"
         db.driver     =   "org.postgresql.Driver"
         db.url        =   "jdbc:postgresql://localhost/test"
+        db.url        =   ${?JDBC_TEST_DATABASE_URL}
         db.user       =   "root"
+        db.user       =   ${?JDBC_TEST_DATABASE_USER}
         db.password   =   ""
         db.password   =   ${?JDBC_TEST_DATABASE_PASSWORD}
     }
