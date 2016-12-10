@@ -3,6 +3,8 @@ play {
     crypto.secret           =   ${?APPLICATION_SECRET}
     i18n.langs              =   [ "en", "en-US" ]
     http.session.maxAge     =   2419200 // 4 weeks (seconds)
+    evolutions.autocommit              =   false
+    evolutions.db.default.autoApply    =   true
     modules.enabled         +=  "org.spongepowered.play.SpongeModule"
 }
 
