@@ -172,7 +172,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                 Redirect(routes.Application.showVerification(None, None))
               } else {
                 // Complete SSO request
-                Ok(views.html.home(user, Some(sso.getRedirect(user)))).discardingCookies(DiscardingCookie("_sso"))
+                Redirect(sso.getRedirect(user)).discardingCookies(DiscardingCookie("_sso"))
               }
           }
         } else {
