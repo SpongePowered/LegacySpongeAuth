@@ -58,10 +58,15 @@ security {
 db.timeout = 10000 // 10 seconds (millis)
 
 mail {
+    username           =   "example"
     username           =   ${?SPONGE_AUTH_EMAIL_USER}
+    email              =   "example@example.com"
     email              =   ${?SPONGE_AUTH_EMAIL}
+    password           =   "password"
     password           =   ${?SPONGE_AUTH_EMAIL_PASSWORD}
+    smtp.host          =   "smtp.gmail.com"
     smtp.host          =   ${?SPONGE_AUTH_SMTP_HOST}
+    smtp.port          =   465
     smtp.port          =   ${?SPONGE_AUTH_SMTP_PORT}
     confirm.maxAge     =   600000                      // 10 minutes (millis)
     transport.protocol =   "smtps"                     // The outgoing transport protocol
@@ -72,11 +77,11 @@ mail {
     // configuration is set up for GMail with "allow less secure apps" enabled in
     // the user settings.
     properties = {
-        "mail.smtps.host"=${?SPONGE_AUTH_SMTP_HOST}
-        "mail.smtp.port"=${?SPONGE_AUTH_SMTP_PORT}
+        "mail.smtps.host"=${mail.smtp.host}
+        "mail.smtp.port"=${mail.smtp.port}
         "mail.smtp.socketFactory.class"="javax.net.ssl.SSLSocketFactory"
         "mail.smtp.socketFactory.fallback"=false
-        "mail.smtp.socketFactory.port"=${?SPONGE_AUTH_SMTP_PORT}
+        "mail.smtp.socketFactory.port"=${mail.smtp.port}
         "mail.smtp.smtps.auth"=true
         "mail.smtps.quitwait"=false
     }
