@@ -22,7 +22,7 @@ trait GoogleAuth {
   val users: UserDAO
   val clientId: String
 
-  val Verifier =  new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory)
+  lazy val Verifier =  new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory)
     .setAudience(Collections.singletonList(this.clientId))
     .build()
 
