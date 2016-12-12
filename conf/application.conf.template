@@ -53,6 +53,9 @@ security {
 
     api.key = "changeme"
     api.key = ${?API_KEY}
+
+    google.clientId = "yourClientId"
+    google.clientId = ${?GOOGLE_CLIENT_ID}
 }
 
 db.timeout = 10000 // 10 seconds (millis)

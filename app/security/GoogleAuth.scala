@@ -16,12 +16,14 @@ import scala.util.Try
 /**
   * Validates incoming Google Sign-in ID tokens
   */
-final class GoogleAuth @Inject()(users: UserDAO) {
+trait GoogleAuth {
 
   val Logger = play.api.Logger("GoogleAuth")
+  val users: UserDAO
+  val clientId: String
 
   val Verifier =  new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory)
-    .setAudience(Collections.singletonList("271228207405-6nd06eoe03d0betqqhffk3d50ufj3rl6.apps.googleusercontent.com"))
+    .setAudience(Collections.singletonList(this.clientId))
     .build()
 
   /**
@@ -67,4 +69,8 @@ final class GoogleAuth @Inject()(users: UserDAO) {
     Option(Try(Verifier.verify(tokenString)).toOption.orNull).map(_.getPayload)
   }
 
+}
+
+final class GoogleAuthImpl @Inject()(override val users: UserDAO, config: SpongeAuthConfig) extends GoogleAuth {
+  override val clientId: String = this.config.security.getString("google.clientId").get
 }
