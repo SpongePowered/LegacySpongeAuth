@@ -1,4 +1,3 @@
-@import controllers.routes.Application
 @import security.SpongeAuthConfig
 @()(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash, request: Request[_])
 
@@ -13,7 +12,7 @@
                     </div>
 
                     <div class="panel-body">
-                        @helper.form(action = Application.logIn()) {
+                        @helper.form(action = routes.Application.logIn()) {
                             @utils.alert("error")
                             @utils.alert("success")
 
@@ -24,15 +23,25 @@
                             <div class="user-input">
                                 <label for="password">@messages("signup.password")</label>
                                 <i>
-                                    <a tabindex="-1" href="@Application.showPasswordReset(None)">
+                                    <a tabindex="-1" href="@routes.Application.showPasswordReset(None)">
                                         @messages("signup.password.forgot")
                                     </a>
                                 </i>
                                 <input type="password" class="form-control" name="password" required />
                             </div>
 
+                            <div class="g-signin2 pull-left" data-onsuccess="onSignIn" data-theme="dark"></div>
+                            <script>
+                                function onSignIn(googleUser) {
+                                    var profile = googleUser.getBasicProfile();
+                                    $('input[name="google-id-token"]').val(googleUser.getAuthResponse().id_token);
+                                    gapi.auth2.getAuthInstance().signOut();
+                                    $('#form-glogin').submit();
+                                }
+                            </script>
+
                             <div class="pull-right">
-                                <a href="@Application.showSignUp(None, None)" class="btn btn-default">
+                                <a href="@routes.Application.showSignUp(None, None)" class="btn btn-default">
                                     @messages("signup.title")
                                 </a>
                                 <button type="submit" class="btn btn-primary">@messages("login.title")</button>
@@ -43,5 +52,10 @@
             </div>
         </div>
     </div>
+
+    <form style="display: none;" id="form-glogin" method="post"
+          action="@routes.Application.logInByGoogle()">
+        <input type="hidden" name="google-id-token" />
+    </form>
 
 }

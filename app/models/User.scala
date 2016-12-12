@@ -35,6 +35,7 @@ case class User(id: Option[Int] = None,
                 totpSecret: Option[String] = None,
                 isTotpConfirmed: Boolean = false,
                 failedTotpAttempts: Int = 0,
+                googleId: Option[String] = None,
                 deletedAt: Option[Timestamp] = None) {
 
   def this(formData: TSignUpForm, createdAt: Timestamp, avatarUrl: String, pwd: Option[Password]) = this(
@@ -47,7 +48,8 @@ case class User(id: Option[Int] = None,
     salt = pwd.map(_.salt),
     mcUsername = formData.mcUsername,
     ircNick = formData.ircNick,
-    ghUsername = formData.ghUsername
+    ghUsername = formData.ghUsername,
+    googleId = formData.googleSubject
   )
 
 }

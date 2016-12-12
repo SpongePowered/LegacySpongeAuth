@@ -23,10 +23,11 @@ abstract class AbstractUserTable(tag: Tag, name: String) extends Table[User](tag
   def totpSecret          = column[String]("totp_secret")
   def isTotpConfirmed     = column[Boolean]("is_totp_confirmed")
   def failedTotpAttempts  = column[Int]("failed_totp_attempts")
+  def googleId            = column[String]("google_id")
   def deletedAt           = column[Timestamp]("deleted_at")
 
   override def * = (id.?, createdAt, joinDate, email, isEmailConfirmed, username, avatarUrl, password.?, salt.?,
                     isAdmin, mcUsername.?, ircNick.?, ghUsername.?, totpSecret.?, isTotpConfirmed, failedTotpAttempts,
-                    deletedAt.?) <> (User.tupled, User.unapply)
+                    googleId.?, deletedAt.?) <> (User.tupled, User.unapply)
 
 }

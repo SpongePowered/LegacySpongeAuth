@@ -9,6 +9,7 @@ POST    /signup                     @controllers.Application.signUp()
 
 GET     /login                      @controllers.Application.showLogIn(sso: Option[String], sig: Option[String])
 POST    /login                      @controllers.Application.logIn()
+POST    /login/g                    @controllers.Application.logInByGoogle()
 
 POST    /email/confirm/resend       @controllers.Application.resendConfirmationEmail()
 GET     /email/confirm/:token       @controllers.Application.confirmEmail(token)

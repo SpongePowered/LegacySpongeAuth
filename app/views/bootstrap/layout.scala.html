@@ -15,6 +15,8 @@ this.
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-signin-scope" content="profile email">
+        <meta name="google-signin-client_id" content="271228207405-6nd06eoe03d0betqqhffk3d50ufj3rl6.apps.googleusercontent.com">
 
         <link rel="icon" type="image/png" href="@config.sponge.getString("icon").get">
         <link rel="stylesheet" type="text/css"
@@ -28,6 +30,7 @@ this.
         <script type="text/javascript" src="@routes.Assets.at("javascripts/jquery-2.2.1.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("bootstrap/js/bootstrap.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("javascripts/svg.js")"></script>
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
     </head>
     <body>
         @if(header) {

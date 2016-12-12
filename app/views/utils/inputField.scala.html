@@ -7,7 +7,7 @@
     <i>(@messages("signup.optional"))</i>
 }
 
-<div class="user-input">
+<div class="user-input input-@name">
     <label for="@name">@messages(title) @if(optional) { @optionalText }</label>
     @input
     @if(info) {

@@ -7,7 +7,7 @@ import external.{GitHubApi, MojangApi}
 import form.api.CreateUserForm
 import play.api.data.Form
 import play.api.data.Forms._
-import security.SpongeAuthConfig
+import security.{GoogleAuth, SpongeAuthConfig}
 
 /**
   * A collection of forms used by Sponge SSO.
@@ -15,7 +15,8 @@ import security.SpongeAuthConfig
 final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
                                       override implicit val users: UserDAO,
                                       override val mojang: MojangApi,
-                                      override val gitHub: GitHubApi) extends Constraints {
+                                      override val gitHub: GitHubApi,
+                                      implicit val googleAuth: GoogleAuth) extends Constraints {
 
   val Api = new Api
 
@@ -28,17 +29,25 @@ final class SpongeAuthForms @Inject()(override val config: SpongeAuthConfig,
   )(LogInForm.apply)(LogInForm.unapply))
 
   /**
+    * The form for logging in via Google.
+    */
+  lazy val GoogleLogIn = Form(single("google-id-token" -> nonEmptyText))
+
+  /**
     * The form submitted upon sign up.
     */
   lazy val SignUp = Form(mapping(
     "email" -> email.unique(_.email),
     "username" -> username,
-    "password" -> password,
+    "password" -> optional(password),
     "2fa" -> optional(boolean),
     "mc-username" -> minecraftUsername.unique(_.mcUsername),
     "irc-nick" -> ircNick.unique(_.ircNick),
-    "gh-username" -> gitHubUsername.unique(_.ghUsername)
-  )(SignUpForm.apply)(SignUpForm.unapply))
+    "gh-username" -> gitHubUsername.unique(_.ghUsername),
+    "google-id-token" -> optional(nonEmptyText)
+  )(SignUpForm.apply)(SignUpForm.unapply)
+    verifying("error.required.password", _.hasAuthMethod)
+    verifying("error.google-id-token.invalid", _.verifyGoogleIdToken()))
 
   /**
     * The form submitted to resend a confirmation email.

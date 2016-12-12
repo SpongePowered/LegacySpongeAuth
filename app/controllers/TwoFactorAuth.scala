@@ -37,7 +37,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     */
   def showSetup() = WithSession { implicit request =>
     val user = request.userSession.user
-    if (user.isTotpConfirmed)
+    if (user.isTotpConfirmed || user.googleId.isDefined)
       Redirect(routes.Application.showHome())
     else {
       // Generate a URI for the OTP auth

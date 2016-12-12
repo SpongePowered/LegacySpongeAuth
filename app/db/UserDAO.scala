@@ -78,9 +78,11 @@ trait UserDAO {
                  verified: Boolean = false,
                  dummy: Boolean = false): User = {
     checkNotNull(formData, "null form data", "")
+
     // Create user
-    val pwd = if (dummy) None else Some(this.passwords.hash(formData.password))
-    var user = new User(formData, theTime, avatarUrl, pwd).copy(isEmailConfirmed = verified)
+    val google = formData.googleSubject.isDefined
+    val pwd = if (dummy || google) None else Some(this.passwords.hash(formData.password.get))
+    var user = new User(formData, theTime, avatarUrl, pwd).copy(isEmailConfirmed = verified || google)
     val insertion = this.users returning this.users += user
     await(db run insertion)
   }
@@ -533,6 +535,17 @@ trait UserDAO {
   def withEmail(email: String): Option[User] = {
     checkNotNull(email, "null email", "")
     await(db.run(this.users.filter(_.email === email).result).map(_.headOption))
+  }
+
+  /**
+    * Returns the [[User]] with the specified Google ID if any.
+    *
+    * @param googleId Google ID to lookup
+    * @return         User if found, None otherwise
+    */
+  def withGoogleId(googleId: String): Option[User] = {
+    checkNotNull(googleId, "null google id", "")
+    await(db.run(this.users.filter(_.googleId === googleId).result).map(_.headOption))
   }
 
   /**

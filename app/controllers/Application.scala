@@ -12,8 +12,7 @@ import org.spongepowered.play.security.SingleSignOnConsumer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import security.SpongeAuthConfig
-import security.SingleSignOnRequest
+import security.{GoogleAuth, SingleSignOnRequest, SpongeAuthConfig}
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
 
@@ -28,6 +27,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   qrRenderer: QrCodeRenderer,
                                   status: StatusZ,
                                   gravatar: GravatarApi,
+                                  googleAuth: GoogleAuth,
                                   override val ssoConsumer: SingleSignOnConsumer,
                                   implicit override val users: UserDAO,
                                   implicit override val cache: CacheApi,
@@ -83,12 +83,12 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         // Create the user and send verification email
         val verificationRequired = this.config.security.getBoolean("email.requireVerification").get
         val user = this.users.createUser(formData, avatarUrl, verified = !verificationRequired)
-        if (verificationRequired) {
+        if (!user.isEmailConfirmed) {
           val confirmation = this.users.createEmailConfirmation(user)
           this.mailer.push(this.emails.confirmation(confirmation))
         }
 
-        if (formData.setup2fa)
+        if (formData.setup2fa && formData.googleSubject.isEmpty)
           Redirect(routes.TwoFactorAuth.showSetup()).remembering(user)
         else
           Redirect(routes.Application.showHome()).authenticatedAs(user)
@@ -141,6 +141,31 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
               Redirect(routes.Application.showHome()).authenticatedAs(user)
             else
               Redirect(routes.TwoFactorAuth.showVerification()).remembering(user)
+        }
+      }
+    )
+  }
+
+  /**
+    * Attempts to log a user in by a submitted Google ID token. This user must
+    * not be already authenticated.
+    *
+    * @return Redirection to log in page if there are any errors, redirection
+    *         to the home page with an authenticated session otherwise.
+    */
+  def logInByGoogle() = NotAuthenticated { implicit request =>
+    this.forms.GoogleLogIn.bindFromRequest().fold(
+      hasErrors =>
+        FormError(routes.Application.showLogIn(None, None), hasErrors),
+      googleIdToken => {
+        // Form data validated, verify incoming Google token
+        this.googleAuth.authenticate(googleIdToken) match {
+          case None =>
+            // Validation failed
+            Redirect(routes.Application.showSignUp(None, None))
+          case Some(user) =>
+            // Success
+            Redirect(routes.Application.showHome()).authenticatedAs(user)
         }
       }
     )
