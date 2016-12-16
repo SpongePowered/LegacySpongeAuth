@@ -5,6 +5,7 @@ play {
     http.session.maxAge     =   2419200 // 4 weeks (seconds)
     evolutions.autocommit              =   false
     evolutions.db.default.autoApply    =   true
+    evolutions.db.test.autoApply    =   true
     modules.enabled         +=  "org.spongepowered.play.SpongeModule"
 }
 

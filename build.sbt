@@ -1,6 +1,6 @@
 name := "spongeauth"
 
-version := "1.0"
+version := "1.1.0"
 
 lazy val `spongeauth` = (project in file(".")).enablePlugins(PlayScala)
 
@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(cache, ws, specs2 % Test)
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
 
 resolvers ++= Seq(
-  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+  "sponge-repo" at "https://repo.spongepowered.org/maven"
 )
 
 routesGenerator := InjectedRoutesGenerator
