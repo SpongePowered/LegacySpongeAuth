@@ -40,7 +40,8 @@ import scala.concurrent.duration.Duration
   * @param session  The Session of the request
   * @param cacheApi CacheApi instance
   */
-class SingleSignOnRequest private (secret: String,
+class SingleSignOnRequest private (baseUrl: String,
+                                   secret: String,
                                    val maxAge: Duration,
                                    val payload: String,
                                    val sig: String,
@@ -89,6 +90,13 @@ class SingleSignOnRequest private (secret: String,
     user.mcUsername.foreach(mcUsername => newPayload += s"&custom.user_field_1=$mcUsername")
     user.ghUsername.foreach(ghUsername => newPayload += s"&custom.user_field_2=$ghUsername")
     user.ircNick.foreach(ircNick => newPayload += s"&custom.user_field_3=$ircNick")
+
+    var avatarUrl = user.avatarUrl
+    if (avatarUrl.startsWith("/"))
+      avatarUrl = baseUrl + avatarUrl
+    newPayload += s"&avatar_url=$avatarUrl"
+
+    println(newPayload)
 
     newPayload = new String(Base64.getEncoder.encode(newPayload.getBytes(this.CharEncoding)))
     val urlEncodedPayload = URLEncoder.encode(newPayload, this.CharEncoding)
@@ -140,9 +148,11 @@ object SingleSignOnRequest {
                             maxAge: Duration,
                             sso: Option[String],
                             sig: Option[String])
-                           (implicit session: Session, cache: CacheApi): Option[SingleSignOnRequest] = {
+                           (implicit session: Session,
+                            cache: CacheApi,
+                            config: SpongeAuthConfig): Option[SingleSignOnRequest] = {
     sso.flatMap(payload => sig.flatMap(sig => {
-      val signOn = new SingleSignOnRequest(secret, maxAge, payload, sig)
+      val signOn = new SingleSignOnRequest(config.app.getString("baseUrl").get, secret, maxAge, payload, sig)
       if (signOn.validateSignature()) {
         signOn.cache()
         Some(signOn)

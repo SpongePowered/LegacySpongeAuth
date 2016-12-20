@@ -65,7 +65,7 @@ trait Actions extends Requests with ActionHelpers {
       * @param user User to remember
       * @return     Result with token
       */
-    def remembering(user: User) = withSession(this.users.createSession(user, authenticated = false))
+    def remembering(user: User) = withSession(this.users.createSession(user))
 
     /**
       * Creates a new [[DbSession]] that is authenticated and adds a reference
@@ -133,7 +133,7 @@ trait Actions extends Requests with ActionHelpers {
         maxAge = Actions.this.ssoMaxAge,
         sso = sso,
         sig = sig
-      )(request.session, Actions.this.cache)
+      )(request.session, Actions.this.cache, Actions.this.config)
       val result = SingleSignOnRequest.addToResult(Redirect(routes.Application.showHome()), signOn)
       Actions.this.users.current(request).map(_ => result)
     }
