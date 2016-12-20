@@ -13,6 +13,8 @@ application {
     dateFormat = "MMM dd, yyyy"
     baseUrl = "http://localhost:9000"
     baseUrl = ${?BASE_URL}
+    uploadsDir = "files"
+    uploadsDir = ${?UPLOADS_DIR}
 }
 
 security {

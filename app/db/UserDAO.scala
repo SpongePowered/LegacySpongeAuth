@@ -2,7 +2,7 @@ package db
 
 import java.io.File
 import java.nio.file.Files._
-import java.nio.file.{Path, Paths}
+import java.nio.file._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 import javax.inject.Inject
@@ -13,7 +13,6 @@ import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
 import form.{SettingsForm, SignUpForm, TSignUpForm}
 import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
-import org.apache.commons.io.FileUtils._
 import org.spongepowered.play.security.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
@@ -24,6 +23,7 @@ import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 import slick.driver.PostgresDriver.api._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -57,6 +57,8 @@ trait UserDAO {
   val passwords: PasswordFactory
   /** Path to the default avatar url */
   val defaultAvatarUrl: String
+  /** The base uploads directory */
+  val uploadsDir: Path
 
   implicit val self = this
 
@@ -109,7 +111,7 @@ trait UserDAO {
     get(user.id.get).get
   }
 
-  private def getAvatarDir(user: User) = Paths.get(s"files/users/${user.username}/avatar")
+  private def getAvatarDir(user: User) = this.uploadsDir.resolve(s"users/${user.username}/avatar")
 
   /**
     * Sets the specified user's avatar to the specified file with the given
@@ -128,7 +130,7 @@ trait UserDAO {
     val path = getAvatarDir(user).resolve(name)
     if (notExists(path.getParent))
       createDirectories(path.getParent)
-    cleanDirectory(path.getParent.toFile)
+    list(path.getParent).iterator().asScala.foreach(delete)
     copy(file.toPath, path)
     saveSetting(user, _.avatarUrl, Some(routes.Settings.showAvatar(user.username).path()))
     get(user.id.get).get
@@ -578,5 +580,6 @@ final class UserDAOImpl @Inject()(provider: DatabaseConfigProvider,
   override val maxPasswordResetAge = this.config.security.getLong("password.maxResetAge").get
   override val encryptionSecret = this.config.play.getString("crypto.secret").get
   override val defaultAvatarUrl = routes.Assets.at("images/spongie.png").path()
+  override val uploadsDir = Paths.get(this.config.app.getString("uploadsDir").get)
 
 }
