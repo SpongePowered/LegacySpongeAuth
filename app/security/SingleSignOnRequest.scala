@@ -92,9 +92,10 @@ class SingleSignOnRequest private (baseUrl: String,
     user.ircNick.foreach(ircNick => newPayload += s"&custom.user_field_3=$ircNick")
 
     var avatarUrl = user.avatarUrl
+    println(avatarUrl)
     if (avatarUrl.startsWith("/"))
       avatarUrl = baseUrl + avatarUrl
-    newPayload += s"&avatar_url=$avatarUrl"
+    newPayload += s"&avatar_force_update=true&avatar_url=${avatarUrl}"
 
     println(newPayload)
 
