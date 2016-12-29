@@ -18,7 +18,7 @@ resolvers ++= Seq(
 routesGenerator := InjectedRoutesGenerator
 
 libraryDependencies ++= Seq(
-  "org.spongepowered"       %%  "sponge-play"             %   "1.0.0-SNAPSHOT",
+  "org.spongepowered"       %   "sponge-play"             %   "1.0.0-SNAPSHOT",
   "com.typesafe.play"       %%  "play-slick"              %   "2.0.0",
   "com.typesafe.play"       %%  "play-slick-evolutions"   %   "2.0.0",
   "org.postgresql"          %   "postgresql"              %   "9.4.1208.jre7",
