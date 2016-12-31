@@ -5,7 +5,11 @@ $(function() {
     var spinner = setting.find('.fa-spinner');
 
     function reloadAvatarImg(src) {
-        $('.user-avatar').attr('src', src + '?' + new Date().getTime());
+        $('.user-avatar').css('background-image', 'url(' + src + ')');
+        var alert = $('.alert-success');
+        alert.find('.message').html(
+            '<strong>Success!</strong> Please re-log to any Sponge services for the change to take effect.');
+        alert.fadeIn('slow');
     }
 
     setting.find('.btn-submit').click(function() {
@@ -38,6 +42,8 @@ $(function() {
             success: function(json) {
                 console.log(json);
                 reloadAvatarImg(json['avatar_url']);
+                $('input[value="file"]').prop('checked', true);
+                $('input[value="gravatar"]').prop('checked', false);
             }
         })
     });

@@ -6,6 +6,11 @@
 
 .user-avatar {
   @include rounded-corners();
+  width: 125px;
+  height: 125px;
+  -webkit-background-size: cover;
+  background-size: cover;
+  background-position: center;
 }
 
 .username {

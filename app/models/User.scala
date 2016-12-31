@@ -38,6 +38,8 @@ case class User(id: Option[Int] = None,
                 googleId: Option[String] = None,
                 deletedAt: Option[Timestamp] = None) {
 
+  def hasGravatar: Boolean = this.avatarUrl.startsWith("https://www.gravatar.com")
+
   def this(formData: TSignUpForm, createdAt: Timestamp, avatarUrl: String, pwd: Option[Password]) = this(
     createdAt = createdAt,
     joinDate = createdAt,

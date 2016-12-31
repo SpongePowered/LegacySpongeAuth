@@ -26,6 +26,8 @@ this.
         <link rel="stylesheet" type="text/css"
               href="@routes.Assets.at("stylesheets/main.css").absoluteURL()" />
         <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
+
+        <script type="text/javascript" src="@routes.Assets.at("javascripts/jquery-2.2.1.min.js")"></script>
     </head>
     <body>
         @if(header) {
@@ -35,7 +37,6 @@ this.
         @if(footer) {
             @bootstrap.footer()
         }
-        <script type="text/javascript" src="@routes.Assets.at("javascripts/jquery-2.2.1.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("bootstrap/js/bootstrap.min.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("javascripts/svg.js")"></script>
         <script type="text/javascript" src="@routes.Assets.at("javascripts/spongie.js")"></script>

@@ -11,6 +11,13 @@
     new SimpleDateFormat(config.app.getString("dateFormat").get).format(date)
 }
 
+@maybeChecked(gravatar: Boolean) = @{
+    if ((user.hasGravatar && gravatar) || (!user.hasGravatar && !gravatar))
+        "checked"
+    else
+        ""
+}
+
 @bootstrap.layout(messages("settings.title")) {
 
     <script type="text/javascript" src="@routes.Assets.at("javascripts/settings.js")"></script>
@@ -22,29 +29,42 @@
 
                 @utils.alert("error")
 
+                <div class="alert alert-success alert-dismissable" role="alert" style="display: none;">
+                    <button type="button" class="close" data-dismiss="alert"
+                    aria-label="@messages("general.close")">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <span class="message"></span>
+                </div>
+
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h4 class="panel-title">@messages("settings.title")</h4>
                     </div>
                     <div class="panel-body panel-settings">
-
                         <div class="setting setting-avatar">
                             <div class="setting-description">
                                 <p>
                                     @messages("user.avatar")
                                     <i class="fa fa-spinner fa-spin" style="display: none;"></i>
                                 </p>
-                                <img class="user-avatar" src="@user.avatarUrl" width="125" height="125" />
+                                <div class="user-avatar" style="background-image: url(@user.avatarUrl);"></div>
                             </div>
                             <div class="setting-content">
                                 @helper.form(action = routes.Settings.updateAvatar()) {
                                     <table class="table-avatar">
                                         <tr>
-                                            <td><input type="radio" name="avatar-method" value="file" checked /></td>
+                                            <td>
+                                                <input type="radio" name="avatar-method" value="file"
+                                                       @maybeChecked(false) />
+                                            </td>
                                             <td><input name="avatar-file" type="file" /></td>
                                         </tr>
                                         <tr>
-                                            <td><input type="radio" name="avatar-method" value="gravatar" /></td>
+                                            <td>
+                                                <input type="radio" name="avatar-method" value="gravatar"
+                                                       @maybeChecked(true) />
+                                            </td>
                                             <td>@Html(messages("settings.avatar.gravatar"))</td>
                                         </tr>
                                     </table>

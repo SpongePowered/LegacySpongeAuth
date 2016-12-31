@@ -82,9 +82,7 @@ final class Settings @Inject()(override val messagesApi: MessagesApi,
     * @return JSON user
     */
   def resetAvatar() = Authenticated { implicit request =>
-    val user = request.user
-    this.users.resetAvatar(user)
-    Ok(toJson(user))
+    Ok(toJson(this.users.resetAvatar(request.user)))
   }
 
   /**
