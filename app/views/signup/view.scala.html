@@ -1,5 +1,6 @@
 @import security.SpongeAuthConfig
 @import views.html.helper.form
+@import views.html.helper.CSRF
 @(sso: Option[String], sig: Option[String])(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash,
         request: Request[_])
 
@@ -32,6 +33,7 @@
                         </script>
 
                         @form(action = routes.Application.signUp()) {
+                            @CSRF.formField
 
                             <input type="hidden" name="google-id-token" />
 

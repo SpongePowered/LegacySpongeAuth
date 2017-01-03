@@ -1,6 +1,7 @@
 @import controllers.routes.Application
 @import security.SpongeAuthConfig
 @import views.html.helper.form
+@import views.html.helper.CSRF
 @(sso: Option[String], sig: Option[String])(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash,
         request: Request[_])
 
@@ -16,6 +17,7 @@
 
                     <div class="panel-body">
                         @form(action = Application.verify()) {
+                            @CSRF.formField
                             @utils.alert("error")
 
                             @utils.inputField("username", "signup.username", info = false) {

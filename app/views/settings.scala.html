@@ -1,6 +1,7 @@
 @import security.SpongeAuthConfig
 @import java.util.Date
 @import java.text.SimpleDateFormat
+@import views.html.helper.CSRF
 @(user: User)(implicit config: SpongeAuthConfig, messages: Messages, request: Request[_], flash: Flash)
 
 @showResetPassword = @{
@@ -52,6 +53,7 @@
                             </div>
                             <div class="setting-content">
                                 @helper.form(action = routes.Settings.updateAvatar()) {
+                                    @CSRF.formField
                                     <table class="table-avatar">
                                         <tr>
                                             <td>
@@ -170,6 +172,7 @@
                         </div>
 
                         @helper.form(action = routes.Settings.saveSettings(), 'id -> "form-save") {
+                            @CSRF.formField
                             <button type="submit" class="btn btn-success pull-right">
                                @messages("settings.save")
                             </button>

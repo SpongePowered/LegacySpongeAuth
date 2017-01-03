@@ -1,4 +1,5 @@
 @import security.SpongeAuthConfig
+@import views.html.helper.CSRF
 @()(implicit config: SpongeAuthConfig, messages: Messages, flash: Flash, request: Request[_])
 
 @bootstrap.layout(messages("login.title")) {
@@ -13,6 +14,8 @@
 
                     <div class="panel-body">
                         @helper.form(action = routes.Application.logIn()) {
+                            @CSRF.formField
+
                             @utils.alert("error")
                             @utils.alert("success")
 
@@ -55,6 +58,7 @@
 
     <form style="display: none;" id="form-glogin" method="post"
           action="@routes.Application.logInByGoogle()">
+        @CSRF.formField
         <input type="hidden" name="google-id-token" />
     </form>
 

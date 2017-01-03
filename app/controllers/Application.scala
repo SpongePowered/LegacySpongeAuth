@@ -310,8 +310,12 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def logOut(redirect: Option[String]) = Action { implicit request =>
     // Clear the current session, delete auth cookie, and delete the
     // server-side Session
-    request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
-    Redirect(redirect.getOrElse("/")).withNewSession.discardingCookies(DiscardingCookie("_token"))
+    if (redirect.isDefined && redirect.get.startsWith("http"))
+      BadRequest
+    else {
+      request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
+      Redirect(redirect.getOrElse("/")).withNewSession.discardingCookies(DiscardingCookie("_token"))
+    }
   }
 
   /**
