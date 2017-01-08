@@ -1,5 +1,6 @@
 package controllers
 
+import java.net.URI
 import javax.inject.Inject
 
 import db.UserDAO
@@ -15,6 +16,8 @@ import play.api.mvc._
 import security.{GoogleAuth, SingleSignOnRequest, SpongeAuthConfig}
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
+
+import scala.util.Try
 
 /**
   * Main entry point for Sponge SSO.
@@ -310,13 +313,15 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
   def logOut(redirect: Option[String]) = Action { implicit request =>
     // Clear the current session, delete auth cookie, and delete the
     // server-side Session
-    if (redirect.isDefined && redirect.get.startsWith("http"))
+    if (redirect.isDefined && !isValidRedirect(redirect.get))
       BadRequest
     else {
       request.cookies.get("_token").foreach(token => this.users.deleteSession(token.value))
       Redirect(redirect.getOrElse("/")).withNewSession.discardingCookies(DiscardingCookie("_token"))
     }
   }
+
+  private def isValidRedirect(url: String) = Try(!new URI(url).isAbsolute).toOption.getOrElse(false)
 
   /**
     * Displays verification form for already authenticated Users.
