@@ -9,6 +9,7 @@ import org.spongepowered.play.security.SingleSignOnConsumer
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Controller, DiscardingCookie}
+import play.filters.csrf.CSRFCheck
 import security.{SingleSignOnRequest, SpongeAuthConfig}
 import security.totp.TotpAuth
 import security.totp.qr.QrCodeRenderer
@@ -21,6 +22,7 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
                                     totp: TotpAuth,
                                     qrRenderer: QrCodeRenderer,
                                     forms: SpongeAuthForms,
+                                    checkToken: CSRFCheck,
                                     override val ssoConsumer: SingleSignOnConsumer,
                                     implicit override val cache: CacheApi,
                                     implicit override val config: SpongeAuthConfig)
@@ -138,8 +140,10 @@ final class TwoFactorAuth @Inject()(override val messagesApi: MessagesApi,
     *
     * @return Redirect to verification
     */
-  def showDisableTotpVerification() = Authenticated { implicit request =>
-    Redirect(this.ssoConsumer.getVerifyUrl("/2fa/disable/verified"))
+  def showDisableTotpVerification() = checkToken {
+    Authenticated { implicit request =>
+      Redirect(this.ssoConsumer.getVerifyUrl("/2fa/disable/verified"))
+    }
   }
 
   /**

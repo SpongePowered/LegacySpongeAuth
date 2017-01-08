@@ -1,4 +1,5 @@
 @import security.SpongeAuthConfig
+@import views.html.helper.CSRF
 @(user: User, redirect: Option[String])(implicit config: SpongeAuthConfig, messages: Messages, request: Request[_])
 
 @bootstrap.layout(messages("home.title")) {
@@ -50,7 +51,7 @@
                             </a>
                         </ul>
 
-                        <a href="@routes.Application.logOut(None)" class="btn btn-primary pull-right">
+                        <a href="@CSRF(routes.Application.logOut(None))" class="btn btn-primary pull-right">
                             @messages("home.logout")
                         </a>
                     </div>
