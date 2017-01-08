@@ -10,9 +10,9 @@ import javax.inject.Inject
 import com.google.common.base.Preconditions._
 import controllers.routes
 import db.schema.user.{DeletedUserTable, UserTable}
-import db.schema.{EmailConfirmationTable, PasswordResetTable, SessionTable}
+import db.schema.{EmailConfirmationTable, OneTimePasswordTable, PasswordResetTable, SessionTable}
 import form.{SettingsForm, SignUpForm, TSignUpForm}
-import models.{EmailConfirmation, PasswordReset, TokenExpirable, User}
+import models.{Session => _, _}
 import org.spongepowered.play.security.CryptoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.{Cookie, Request}
@@ -40,6 +40,7 @@ trait UserDAO {
   val sessions = TableQuery[SessionTable]
   val emailConfirms = TableQuery[EmailConfirmationTable]
   val passwordResets = TableQuery[PasswordResetTable]
+  val otps = TableQuery[OneTimePasswordTable]
 
   /** The maximum wait time for database queries */
   val timeout: Duration = 10.seconds
@@ -345,8 +346,14 @@ trait UserDAO {
     checkNotNull(user, "null user", "")
     checkArgument(user.id.isDefined, "undefined user", "")
     checkArgument(user.totpSecret.isDefined, "totp disabled for user", "")
+    val userId = user.id.get
+    if (await(db.run(this.otps.filter(otp => otp.userId === userId && otp.code === code).result)).nonEmpty)
+      return false
     val secret = decrypt(user.totpSecret.get, this.encryptionSecret)
-    this.totp.checkCode(secret, code)
+    val result = this.totp.checkCode(secret, code)
+    if (result)
+      await(db.run(this.otps += OneTimePassword(createdAt = theTime, userId = userId, code = code)))
+    result
   }
 
   /**
