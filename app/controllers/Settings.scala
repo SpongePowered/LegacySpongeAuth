@@ -1,13 +1,16 @@
 package controllers
 
+import java.io.InputStream
+import java.nio.file.Files
 import javax.inject.Inject
 
 import api.SpongeAuthWrites
 import db.UserDAO
 import external.GravatarApi
 import form.SpongeAuthForms
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.spongepowered.play.security.SingleSignOnConsumer
+import play.api.Logger
 import play.api.cache.CacheApi
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json.toJson
@@ -96,7 +99,17 @@ final class Settings @Inject()(override val messagesApi: MessagesApi,
       case None =>
         NotFound
       case Some(path) =>
-        Ok(FileUtils.readFileToByteArray(path.toFile)).as("image/jpeg")
+        var in: InputStream = null
+        try {
+          in = Files.newInputStream(path)
+          Ok(IOUtils.toByteArray(in)).as("image/jpeg")
+        } catch {
+          case e: Exception =>
+            Logger.error("error loading avatar", e)
+            InternalServerError
+        } finally {
+          in.close()
+        }
     }
   }
 
