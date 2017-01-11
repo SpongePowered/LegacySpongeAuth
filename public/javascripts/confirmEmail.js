@@ -7,7 +7,8 @@ $(function() {
             url: '/email/confirm/resend',
             method: 'post',
             data: {
-                'email': email
+                'email': email,
+                'csrfToken': csrf
             },
             complete: function() {
                 spinner.hide();
