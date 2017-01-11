@@ -409,4 +409,13 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
     Redirect(routes.Application.showSignUp(None, None))
   }
 
+  def migrate() = Authenticated { implicit request =>
+    if (!request.user.isAdmin)
+      Unauthorized
+    else {
+      this.users.migrate()
+      Ok
+    }
+  }
+
 }

@@ -573,6 +573,16 @@ trait UserDAO {
     await(db run query.result)
   }
 
+  def migrate() = {
+    db.run(this.users.filter(_.avatarUrl === "/assets/images/spongie.png").result).andThen {
+      case result =>
+        for (user <- result.get) {
+          val statement = for { u <- this.users if u.id === user.id.get } yield u.avatarUrl
+          db.run(statement.update(this.letterAvatars.getUrl(user.username)))
+        }
+    }
+  }
+
 }
 
 final class UserDAOImpl @Inject()(provider: DatabaseConfigProvider,

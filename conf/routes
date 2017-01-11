@@ -41,5 +41,7 @@ GET     /statusz                    @controllers.Application.showStatusZ()
 
 #GET     /reset                      @controllers.Application.reset()
 
+GET     /admin/migrate              @controllers.Application.migrate()
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
