@@ -20,6 +20,7 @@ class Module extends AbstractModule {
     bind(classOf[MojangApi]).to(classOf[MojangApiImpl])
     bind(classOf[GitHubApi]).to(classOf[GitHubApiImpl])
     bind(classOf[GravatarApi]).to(classOf[Gravatar])
+    bind(classOf[LetterAvatars]).to(classOf[LetterAvatarsImpl])
   }
 
 }

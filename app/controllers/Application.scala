@@ -4,7 +4,7 @@ import java.net.URI
 import javax.inject.Inject
 
 import db.UserDAO
-import external.GravatarApi
+import external.{GravatarApi, LetterAvatars}
 import form.SpongeAuthForms
 import mail.Emails
 import org.spongepowered.play.StatusZ
@@ -33,6 +33,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
                                   gravatar: GravatarApi,
                                   googleAuth: GoogleAuth,
                                   checkToken: CSRFCheck,
+                                  letterAvatars: LetterAvatars,
                                   override val ssoConsumer: SingleSignOnConsumer,
                                   implicit override val users: UserDAO,
                                   implicit override val cache: CacheApi,
@@ -81,7 +82,7 @@ final class Application @Inject()(override val messagesApi: MessagesApi,
         FormError(routes.Application.showSignUp(None, None), hasErrors),
       formData => {
         // Set the user's default avatar
-        var avatarUrl = this.users.defaultAvatarUrl
+        var avatarUrl = this.letterAvatars.getUrl(formData.username)
         if (this.gravatar.exists(formData.email))
           avatarUrl = this.gravatar.get(formData.email)
 

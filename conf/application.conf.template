@@ -96,6 +96,7 @@ mail {
 external {
     mojang.timeout = 10000
     github.timeout = 10000
+    forums.url = "https://forums.spongepowered.org"
 }
 
 slick.dbs {

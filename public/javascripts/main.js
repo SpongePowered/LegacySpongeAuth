@@ -1,0 +1,1 @@
+var csrf = null;

@@ -11,6 +11,7 @@ import com.google.common.base.Preconditions._
 import controllers.routes
 import db.schema.user.{DeletedUserTable, UserTable}
 import db.schema.{EmailConfirmationTable, OneTimePasswordTable, PasswordResetTable, SessionTable}
+import external.LetterAvatars
 import form.{SettingsForm, SignUpForm, TSignUpForm}
 import models.{Session => _, _}
 import org.spongepowered.play.security.CryptoUtils._
@@ -56,10 +57,9 @@ trait UserDAO {
   val encryptionSecret: String
   /** PasswordFactory instance */
   val passwords: PasswordFactory
-  /** Path to the default avatar url */
-  val defaultAvatarUrl: String
   /** The base uploads directory */
   val uploadsDir: Path
+  val letterAvatars: LetterAvatars
 
   implicit val self = this
 
@@ -77,7 +77,7 @@ trait UserDAO {
     * @return         New user
     */
   def createUser(formData: TSignUpForm,
-                 avatarUrl: String = defaultAvatarUrl,
+                 avatarUrl: String,
                  verified: Boolean = false,
                  dummy: Boolean = false): User = {
     checkNotNull(formData, "null form data", "")
@@ -157,7 +157,7 @@ trait UserDAO {
     * @param user User to reset avatar of
     * @return     Updated user
     */
-  def resetAvatar(user: User): User = setAvatar(user, this.defaultAvatarUrl)
+  def resetAvatar(user: User): User = setAvatar(user, this.letterAvatars.getUrl(user.username))
 
   /**
     * Returns path to the specified user's avatar.
@@ -577,6 +577,7 @@ trait UserDAO {
 
 final class UserDAOImpl @Inject()(provider: DatabaseConfigProvider,
                                   config: SpongeAuthConfig,
+                                  override val letterAvatars: LetterAvatars,
                                   override val passwords: PasswordFactory,
                                   override val totp: TotpAuth) extends UserDAO {
 
@@ -586,7 +587,6 @@ final class UserDAOImpl @Inject()(provider: DatabaseConfigProvider,
   override val maxEmailConfirmationAge = this.config.mail.getLong("confirm.maxAge").get
   override val maxPasswordResetAge = this.config.security.getLong("password.maxResetAge").get
   override val encryptionSecret = this.config.play.getString("crypto.secret").get
-  override val defaultAvatarUrl = routes.Assets.at("images/spongie.png").path()
   override val uploadsDir = Paths.get(this.config.app.getString("uploadsDir").get)
 
 }

@@ -35,6 +35,7 @@ $(function() {
         $.ajax({
             url: '/settings/avatar/reset',
             type: 'post',
+            data: { csrfToken: csrf },
             dataType: 'json',
             complete: function() {
                 spinner.hide();
